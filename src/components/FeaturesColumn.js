@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 
 const features = [
   {
@@ -14,7 +15,7 @@ const features = [
   {
     title: "Translate and Explain Forms in Your Own Language",
     description:
-      "FormBuddy AI speaks your language — literally. Whether it's Azerbaijani, Spanish, Turkish, or Urdu, the app explains every part of the form in clear spoken sentences so nothing gets lost in translation.",
+      "FormBuddy AI speaks your language — literally. Whether it's Spanish, Chinese, German, or French the app explains every part of the form in clear spoken sentences so nothing gets lost in translation.",
   },
   {
     title: "Understand Legal Forms Without Needing a Lawyer",
@@ -30,12 +31,7 @@ const features = [
     title: "Help for Business Forms, Invoices & Applications",
     description:
       "Running a small business? FormBuddy AI explains invoice templates, tax forms, supplier agreements, and grant applications in plain terms so you can focus on growing your business.",
-  },
-  {
-    title: "Accessible AI for Visually Impaired or Dyslexic Users",
-    description:
-      "FormBuddy AI doesn’t just show — it speaks. For users with low vision, dyslexia, or reading challenges, our voice-first experience turns any document into a step-by-step audio guide.",
-  },
+  }
 ];
 
 export default function FeaturesColumn() {
@@ -50,12 +46,26 @@ export default function FeaturesColumn() {
             }`}
           >
             <div className="flex-1 flex flex-col justify-center">
-              <h3 className="text-2xl font-brand text-blue-700 mb-2">{feature.title}</h3>
-              <p className="text-base text-gray-700 font-normal">{feature.description}</p>
+              <h3 className="text-2xl text-blue-700 mb-2 font-extrabold font-poppins">{feature.title}</h3>
+              <p className="text-sm text-gray-500 font-normal">{feature.description}</p>
             </div>
             <div className="flex-1 flex items-center justify-center">
-              <div className="w-64 h-40 bg-blue-100 border-4 border-blue-300 rounded-2xl flex items-center justify-center">
-                <span className="text-blue-400 font-bold text-lg">Image</span>
+              <div className="w-64 md:w-full max-w-md flex items-center justify-center">
+                <Image
+                  src={`/section_${idx + 1}.png`}
+                  alt={feature.title}
+                  width={600}
+                  height={400}
+                  className="select-none pointer-events-none image-protected"
+                  style={{ 
+                    width: '70%', 
+                    height: 'auto', 
+                    borderRadius: '1rem', 
+                    objectFit: 'contain',
+                    userSelect: 'none'
+                  }}
+                  draggable={false}
+                />
               </div>
             </div>
           </div>
