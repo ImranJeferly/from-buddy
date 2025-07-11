@@ -202,15 +202,28 @@ export default function Navbar({ showUpgradeButton = false }) {
                 </Link>
               ) : (
                 <Link href="/upload" className="ml-3">
-                  <BrandButton
-                    style={{ 
+                  <button 
+                    className="flex items-center justify-center px-4 py-2 text-white rounded-full transition-all gap-2"
+                    style={{
+                      background: 'linear-gradient(135deg, #64B5F6, #2196F3)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
                       fontSize: '14px',
-                      padding: '0.5rem 1rem'
+                      fontWeight: '600'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+                      e.target.style.transform = 'scale(1.05)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'linear-gradient(135deg, #64B5F6, #2196F3)';
+                      e.target.style.transform = 'scale(1)';
                     }}
                   >
                     <span>Upload</span>
-                    <CloudArrowUpIcon className="h-4 w-4 ml-1" />
-                  </BrandButton>
+                    <CloudArrowUpIcon className="h-4 w-4" />
+                  </button>
                 </Link>
               )}
             </div>

@@ -1,5 +1,11 @@
 "use client";
 
+import { handleImageFile } from "../../handlers/imageHandler";
+import { handlePdfFile } from "../../handlers/pdfHandler";
+import { handleDocumentFile } from "../../handlers/documentHandler";
+import { handleUrlInput } from "../../handlers/urlHandler";
+import { getFileType } from "../../handlers/fileTypeHelper";
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -22,6 +28,9 @@ export default function UploadPage() {
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [urlInput, setUrlInput] = useState('');
   const [activeTab, setActiveTab] = useState('upload'); // 'upload' or 'url'
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [overlayMessage, setOverlayMessage] = useState('');
+  const [processingItem, setProcessingItem] = useState(''); // File name or URL being processed
   const [isVideoExpanded, setIsVideoExpanded] = useState(false);
   const [audioElement, setAudioElement] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
@@ -119,6 +128,9 @@ export default function UploadPage() {
     }
   };
 
+  // Store the selected file for later processing
+  const [selectedFile, setSelectedFile] = useState(null);
+  
   const handleFileUpload = (file) => {
     // Check if user has reached their upload limit
     if (userData?.planType !== 'pro' && 
@@ -127,37 +139,22 @@ export default function UploadPage() {
       return;
     }
     
-    setFileName(file.name);
-    setUploadStatus('uploading');
+    // Determine file type using our helper function
+    const fileType = getFileType(file);
+    console.log(`File uploaded: ${file.name} (${fileType})`);
     
-    // Simulate upload progress
-    setTimeout(() => {
-      setUploadStatus('success');
-      
-      // Increment upload count in Firestore
-      try {
-        if (currentUser) {
-          const userRef = doc(db, "users", currentUser.uid);
-          setDoc(userRef, { 
-            uploadCount: (userData?.uploadCount || 0) + 1,
-            lastUpdated: new Date()
-          }, { merge: true });
-          
-          // Update local state to reflect the new count
-          if (userData) {
-            userData.uploadCount = (userData.uploadCount || 0) + 1;
-          }
-        }
-      } catch (error) {
-        console.error("Error updating upload count:", error);
-      }
-      
-      // Reset after 3 seconds
-      setTimeout(() => {
-        setUploadStatus(null);
-        setFileName('');
-      }, 3000);
-    }, 2000);
+    // If it's an unsupported file type, alert the user
+    if (fileType === 'unknown') {
+      console.warn('Unsupported file type:', file.type);
+      alert("Sorry, this file type is not supported. Please try a PDF, image, or document file.");
+      return;
+    }
+    
+    // Store file details but don't process yet - only store the file and show its status
+    setFileName(file.name);
+    setSelectedFile(file);
+    setUploadStatus('uploaded');
+    console.log('File stored and ready for processing when user clicks "Generate Explanation"');
   };
 
   const triggerFileInput = () => {
@@ -181,36 +178,164 @@ export default function UploadPage() {
     }
     
     if (activeTab === 'upload') {
-      // Handle file upload case
-      if (fileName) {
-        console.log('Generating explanation for file:', fileName, 'in language:', selectedLanguage);
-        alert(`Generating explanation for uploaded file: ${fileName}\nLanguage: ${selectedLanguage}`);
+      // Process the uploaded file
+      if (selectedFile && fileName) {
+        console.log('Processing file:', fileName, 'in language:', selectedLanguage);
         
-        // We don't need to increment upload count here as it's already done in handleFileUpload
+        // Show processing state with overlay
+        setProcessingItem(fileName);
+        setUploadStatus('processing'); // Changed from 'uploading' to 'processing' for clarity
+        setOverlayMessage('Processing your file... Please wait');
+        setShowOverlay(true);
+        
+        // Determine file type using our helper function
+        const fileType = getFileType(selectedFile);
+        
+        // Send to appropriate handler based on file type
+        let result = { success: false, message: 'Unknown file type' };
+        
+        // Process file asynchronously
+        const processFile = async () => {
+          try {
+            let result;
+            
+            switch (fileType) {
+              case 'image':
+                console.log("Sending to image handler...");
+                result = await handleImageFile(selectedFile, currentUser?.uid, userData);
+                break;
+              case 'pdf':
+                console.log("Sending to PDF handler...");
+                result = await handlePdfFile(selectedFile, currentUser?.uid, userData);
+                break;
+              case 'document':
+                console.log("Sending to document handler...");
+                result = await handleDocumentFile(selectedFile, currentUser?.uid, userData);
+                break;
+              default:
+                throw new Error("Unsupported file type");
+            }
+            
+            // Handle success result
+            setUploadStatus('success');
+            setOverlayMessage(`Success! Your file has been processed.`);
+            console.log(result.message);
+            
+            // Update local state to reflect any count changes made by the handler
+            if (result.updatedUploadCount !== undefined && userData) {
+              userData.uploadCount = result.updatedUploadCount;
+            }              // If the handler indicates we should redirect, wait briefly then redirect
+              if (result.shouldRedirect && result.redirectUrl) {
+                // Update message to indicate redirection
+                setTimeout(() => {
+                  setOverlayMessage('Redirecting to explanation...');
+                  // Then redirect after a moment
+                  setTimeout(() => {
+                    router.push(result.redirectUrl);
+                  }, 1000);
+                }, 1000);
+            } else {
+              // No redirection needed, just reset after displaying success (3 seconds)
+              setTimeout(() => {
+                setShowOverlay(false);
+                setUploadStatus(null);
+                setFileName('');
+                setSelectedFile(null);
+              }, 3000);
+            }
+            
+          } catch (error) {
+            // Handle error case
+            setUploadStatus('error');
+            setOverlayMessage(`Error: ${error.message || "Processing failed"}`);
+            console.error("Processing failed:", error);
+            
+            // Reset after error display (3 seconds)
+            setTimeout(() => {
+              setShowOverlay(false);
+              setUploadStatus(null);
+              setFileName('');
+              setSelectedFile(null);
+            }, 3000);
+          }
+        };
+        
+        // Start the processing after a short delay to ensure overlay is visible
+        setTimeout(() => {
+          processFile();
+        }, 500);
       }
     } else {
       // Handle URL case
       if (urlInput.trim()) {
-        console.log('Generating explanation for URL:', urlInput, 'in language:', selectedLanguage);
-        alert(`Generating explanation for URL: ${urlInput}\nLanguage: ${selectedLanguage}`);
+        console.log('Processing URL:', urlInput, 'in language:', selectedLanguage);
         
-        // Increment upload count for URL submissions
-        try {
-          if (currentUser) {
-            const userRef = doc(db, "users", currentUser.uid);
-            setDoc(userRef, { 
-              uploadCount: (userData?.uploadCount || 0) + 1,
-              lastUpdated: new Date()
-            }, { merge: true });
+        // Show processing state with overlay
+        setFileName(urlInput); // Use URL as the "file name" for display
+        setProcessingItem(urlInput);
+        setUploadStatus('processing');
+        setOverlayMessage('Processing your URL... Please wait');
+        setShowOverlay(true);
+        
+        // Process URL asynchronously
+        const processUrl = async () => {
+          try {
+            // Send the URL to the handler along with user data for processing
+            const result = await handleUrlInput(urlInput, selectedLanguage, currentUser?.uid, userData);
             
-            // Update local state to reflect the new count
-            if (userData) {
-              userData.uploadCount = (userData.uploadCount || 0) + 1;
+            if (result.success) {
+              setUploadStatus('success');
+              setOverlayMessage('Success! Your URL has been processed.');
+              console.log(result.message);
+              
+              // Update local state to reflect any count changes made by the handler
+              if (result.updatedUploadCount !== undefined && userData) {
+                userData.uploadCount = result.updatedUploadCount;
+              }
+              
+              // If the handler indicates we should redirect, wait briefly then redirect
+              if (result.shouldRedirect && result.redirectUrl) {
+                // Update message to indicate redirection
+                setTimeout(() => {
+                  setOverlayMessage('Redirecting to explanation...');
+                  // Then redirect after a moment
+                  setTimeout(() => {
+                    router.push(result.redirectUrl);
+                  }, 1000);
+                }, 1000);
+              } else {
+                // No redirection needed, just reset after displaying success (3 seconds)
+                setTimeout(() => {
+                  setShowOverlay(false);
+                  setUploadStatus(null);
+                  setFileName('');
+                  setUrlInput('');
+                }, 3000);
+              }
+            } else {
+              throw new Error(result.message || "URL processing failed");
             }
+            
+          } catch (error) {
+            // Handle error case
+            setUploadStatus('error');
+            setOverlayMessage(`Error: ${error.message || "URL processing failed"}`);
+            console.error("URL processing failed:", error);
+            
+            // Reset after error display (3 seconds)
+            setTimeout(() => {
+              setShowOverlay(false);
+              setUploadStatus(null);
+              setFileName('');
+              setUrlInput('');
+            }, 3000);
           }
-        } catch (error) {
-          console.error("Error updating upload count:", error);
-        }
+        };
+        
+        // Start the processing after a short delay to ensure overlay is visible
+        setTimeout(() => {
+          processUrl();
+        }, 500);
       }
     }
   };
@@ -519,18 +644,20 @@ export default function UploadPage() {
                 <div className="w-full flex-shrink-0">
                   <div className={`w-full relative transition-all duration-300 ${uploadStatus === 'success' ? 'scale-105' : ''}`}>
                     <div 
-                      onDragEnter={handleDragEnter}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      onClick={triggerFileInput}
-                      onMouseEnter={() => setIsHovered(true)}
-                      onMouseLeave={() => setIsHovered(false)}
+                      onDragEnter={uploadStatus === 'uploaded' ? null : handleDragEnter}
+                      onDragOver={uploadStatus === 'uploaded' ? null : handleDragOver}
+                      onDragLeave={uploadStatus === 'uploaded' ? null : handleDragLeave}
+                      onDrop={uploadStatus === 'uploaded' ? null : handleDrop}
+                      onClick={uploadStatus === 'uploaded' ? null : triggerFileInput}
+                      onMouseEnter={() => !uploadStatus && setIsHovered(true)}
+                      onMouseLeave={() => !uploadStatus && setIsHovered(false)}
                       className={`w-full cursor-pointer flex flex-col items-center justify-center border-4 border-dashed rounded-2xl py-16 px-4 transition-all duration-500 mb-6 relative overflow-hidden ${
                         isDragging 
                           ? 'border-[#2196F3] bg-blue-100 scale-[1.02]' 
-                          : uploadStatus === 'uploading'
+                          : uploadStatus === 'processing'
                           ? 'border-yellow-300 bg-blue-50'
+                          : uploadStatus === 'uploaded'
+                          ? 'border-blue-400 bg-blue-50'
                           : uploadStatus === 'success'
                           ? 'border-green-400 bg-green-50'
                           : isHovered
@@ -574,13 +701,36 @@ export default function UploadPage() {
                           </div>
                         )}
                         
-                        {uploadStatus === 'uploading' && (
+                        {uploadStatus === 'uploaded' && (
+                          <div className="text-center">
+                            <svg className="w-16 h-16 mb-4 mx-auto text-[#2196F3]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            <span className="text-[#2196F3] font-semibold text-lg block mb-1">File ready!</span>
+                            <span className="text-sm text-gray-500 block">{fileName}</span>
+                            <span className="text-xs text-gray-400 mt-3 block font-medium">Click "Generate Explanation" below to process</span>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering parent click
+                                // Reset file selection
+                                setUploadStatus(null);
+                                setFileName('');
+                                setSelectedFile(null);
+                              }}
+                              className="mt-3 text-xs text-red-500 hover:text-red-700 font-medium underline"
+                            >
+                              Remove file
+                            </button>
+                          </div>
+                        )}
+                        
+                        {uploadStatus === 'processing' && (
                           <div className="text-center">
                             <svg className="animate-spin w-16 h-16 mb-4 mx-auto text-[#2196F3]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <span className="text-[#2196F3] font-semibold text-lg block mb-1">Uploading file...</span>
+                            <span className="text-[#2196F3] font-semibold text-lg block mb-1">Processing file...</span>
                             <span className="text-sm text-gray-500 block">{fileName}</span>
                           </div>
                         )}
@@ -591,6 +741,16 @@ export default function UploadPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                             <span className="text-green-600 font-semibold text-lg block mb-1">Upload complete!</span>
+                            <span className="text-sm text-gray-500 block">{fileName}</span>
+                          </div>
+                        )}
+                        
+                        {uploadStatus === 'error' && (
+                          <div className="text-center">
+                            <svg className="w-16 h-16 mb-4 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span className="text-red-600 font-semibold text-lg block mb-1">Processing failed</span>
                             <span className="text-sm text-gray-500 block">{fileName}</span>
                           </div>
                         )}
@@ -614,19 +774,62 @@ export default function UploadPage() {
                       Enter a URL to analyze
                     </label>
                     <div className="relative">
-                      <input
-                        type="url"
-                        value={urlInput}
-                        onChange={handleUrlInputChange}
-                        placeholder="https://example.com/form-page"
-                        className="w-full px-4 py-4 border-2 border-blue-200 rounded-2xl focus:border-blue-400 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all duration-200 text-gray-900 placeholder-gray-500 bg-white shadow-sm hover:border-blue-300 pr-12"
-                        style={{ fontFamily: 'var(--font-text)', fontWeight: 'normal' }}
-                      />
-                      <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                        </svg>
-                      </div>
+                      {!uploadStatus && (
+                        <>
+                          <input
+                            type="url"
+                            value={urlInput}
+                            onChange={handleUrlInputChange}
+                            placeholder="https://example.com/form-page"
+                            className={`w-full px-4 py-4 border-2 rounded-2xl focus:ring-2 focus:outline-none transition-all duration-200 text-gray-900 placeholder-gray-500 bg-white shadow-sm pr-12
+                              ${activeTab === 'url' ? 'border-blue-200 focus:border-blue-400 focus:ring-blue-200 hover:border-blue-300' : 'border-blue-200'}
+                            `}
+                            style={{ fontFamily: 'var(--font-text)', fontWeight: 'normal' }}
+                          />
+                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                            </svg>
+                          </div>
+                        </>
+                      )}
+                      
+                      {uploadStatus === 'processing' && activeTab === 'url' && (
+                        <div className="flex items-center justify-center w-full px-4 py-4 border-2 border-yellow-300 rounded-2xl bg-blue-50">
+                          <div className="text-center">
+                            <svg className="animate-spin w-10 h-10 mb-3 mx-auto text-[#2196F3]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="text-[#2196F3] font-semibold text-md block mb-1">Processing URL...</span>
+                            <span className="text-sm text-gray-500 block">{urlInput}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {uploadStatus === 'success' && activeTab === 'url' && (
+                        <div className="flex items-center justify-center w-full px-4 py-4 border-2 border-green-400 rounded-2xl bg-green-50">
+                          <div className="text-center">
+                            <svg className="w-10 h-10 mb-3 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span className="text-green-600 font-semibold text-md block mb-1">URL processed successfully!</span>
+                            <span className="text-sm text-gray-500 block">{urlInput}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {uploadStatus === 'error' && activeTab === 'url' && (
+                        <div className="flex items-center justify-center w-full px-4 py-4 border-2 border-red-400 rounded-2xl bg-red-50">
+                          <div className="text-center">
+                            <svg className="w-10 h-10 mb-3 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <span className="text-red-600 font-semibold text-md block mb-1">URL processing failed</span>
+                            <span className="text-sm text-gray-500 block">{urlInput}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -637,12 +840,12 @@ export default function UploadPage() {
             <div className="mt-6">
               <button
                 onClick={handleGenerateExplanation}
-                disabled={activeTab === 'upload' ? !fileName : !urlInput.trim()}
+                disabled={(activeTab === 'upload' ? !selectedFile : !urlInput.trim()) || uploadStatus === 'processing'}
                 className={`relative w-full py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-300 transform ${
-                  (activeTab === 'upload' ? fileName : urlInput.trim())
+                  (activeTab === 'upload' ? selectedFile : urlInput.trim()) && uploadStatus !== 'processing'
                     ? 'bg-gradient-to-r from-[#2196F3] to-[#1976D2] text-white hover:from-[#1976D2] hover:to-[#1565C0] hover:scale-105 hover:shadow-2xl shadow-lg border-2 border-transparent hover:border-white/20'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed border-2 border-gray-200'
-                } ${(activeTab === 'upload' ? fileName : urlInput.trim()) ? 'active:scale-95' : ''}`}
+                } ${(activeTab === 'upload' ? selectedFile : urlInput.trim()) && uploadStatus !== 'processing' ? 'active:scale-95' : ''}`}
                 style={{ fontFamily: 'var(--font-text)' }}
               >
                 <span className="flex items-center justify-center space-x-3">
@@ -667,6 +870,62 @@ export default function UploadPage() {
         </div>
       </div>
       <Footer hideVideo={true} />
+
+      {/* Processing Overlay */}
+      {showOverlay && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center">
+          {/* Backdrop - dark blurred overlay that covers everything including navbar */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-md animate-blurIn"></div>
+          
+          {/* Popup Content */}
+          <div className="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-10 mx-4 transform transition-all duration-300 scale-100 animate-fadeIn border border-gray-100/50">
+            <div className="flex flex-col items-center text-center">
+              {uploadStatus === 'processing' && (
+                <>
+                  <div className="rounded-full bg-gradient-to-br from-blue-50 to-blue-100 p-7 mb-7 shadow-lg border border-blue-200/50">
+                    <svg className="animate-spin w-20 h-20 text-[#2196F3]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3"></circle>
+                      <path className="opacity-80" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-3">Processing</h3>
+                  <p className="text-gray-600 mb-6 text-lg">
+                    Please wait while we analyze your content
+                  </p>
+                </>
+              )}
+
+              {uploadStatus === 'success' && (
+                <>
+                  <div className="rounded-full bg-gradient-to-br from-green-50 to-green-100 p-7 mb-7 shadow-lg border border-green-200/50">
+                    <svg className="w-20 h-20 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-3">Success!</h3>
+                  <p className="text-gray-600 mb-2 text-lg">
+                    Your content has been processed successfully
+                  </p>
+                </>
+              )}
+
+              {uploadStatus === 'error' && (
+                <>
+                  <div className="rounded-full bg-gradient-to-br from-red-50 to-red-100 p-7 mb-7 shadow-lg border border-red-200/50">
+                    <svg className="w-20 h-20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                  </div>
+                  <h3 className="text-3xl font-bold text-gray-800 mb-3">Error</h3>
+                  <p className="text-gray-600 mb-2 text-lg">
+                    {overlayMessage.replace('Error: ', '')}
+                  </p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

@@ -36,7 +36,7 @@ const features = [
 
 export default function FeaturesColumn() {
   return (
-    <section className="features-column-section bg-white py-16">
+    <section id="features" className="features-column-section bg-white py-16">
       <div className="max-w-5xl mx-auto flex flex-col gap-12">
         {features.map((feature, idx) => (
           <div

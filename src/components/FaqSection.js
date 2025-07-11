@@ -53,7 +53,7 @@ export default function FaqSection() {
   };
 
   return (
-    <section className="faq-section py-20 bg-white">
+    <section id="faq" className="faq-section py-20 bg-white">
       <div className="max-w-3xl mx-auto px-6">
         <h2 className="home-h2 mb-12 text-center w-full !font-poppins font-bold">
           Frequently Asked Questions

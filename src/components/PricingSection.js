@@ -39,7 +39,7 @@ const plans = [
 
 export default function PricingSection() {
 	return (
-		<section className="pricing-section py-20">
+		<section id="pricing" className="pricing-section py-20">
 			<div className="mx-auto px-6 py-16 bg-gradient-to-br from-[#2196F3] to-[#1565C0] rounded-3xl shadow-lg" style={{ 
 				backgroundImage: "radial-gradient(circle at 10% 90%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 20%), linear-gradient(to bottom right, #2196F3, #1565C0)"
 			}}>

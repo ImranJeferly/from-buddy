@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Image from "next/image";
 
@@ -9,7 +11,28 @@ export default function Hero() {
         <p className="hero-desc font-text text-[#222] text-lg mb-8 max-w-xl">
           Struggling to understand complex forms? <span className="brand">Form Buddy AI</span> analyzes your uploaded forms and provides clear, step-by-step explanations for every input field. No more confusion—just clarity!
         </p>
-        <button className="brand-btn hero-btn max-w-xs text-base py-3">Try It Now</button>
+        <button 
+          className="flex items-center justify-center px-6 py-3 text-white rounded-full transition-all gap-2"
+          style={{
+            background: 'linear-gradient(135deg, #64B5F6, #2196F3)',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+            fontSize: '16px',
+            fontWeight: '600',
+            minWidth: '200px'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+            e.target.style.transform = 'scale(1.05)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.background = 'linear-gradient(135deg, #64B5F6, #2196F3)';
+            e.target.style.transform = 'scale(1)';
+          }}
+        >
+          Try It Now
+        </button>
       </div>
       <div className="hero-image flex items-center justify-center select-none">
         <video
