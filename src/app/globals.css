@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@import "../styles/form-field.css";
+@import "../styles/paginated-form.css";
 
 :root {
   --background: #fff;
@@ -25,6 +27,8 @@ body {
   font-family: var(--font-text);
   background: #FDFDFC;
 }
+
+/* Progress bar animation has been removed */
 
 .font-poppins {
   font-family: var(--font-text) !important;

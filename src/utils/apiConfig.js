@@ -1,10 +1,18 @@
 /**
  * Utility to check if required API keys are available
  * This helps catch issues early rather than getting API errors
+ * 
+ * Updated to check for GPT-4o model support
  */
 
 // Keep track of whether warnings have already been shown
 let warningShown = false;
+
+/**
+ * Current API model being used
+ * Update this if the model changes in the future
+ */
+export const OPENAI_MODEL = 'gpt-4o';
 
 /**
  * Checks if the OpenAI API is likely to be configured
@@ -23,7 +31,7 @@ export const isOpenAIConfigured = async () => {
     
     // Only show the warning once to avoid spamming the console
     if (!warningShown) {
-      console.warn('OpenAI API may not be properly configured. Set up your .env.local file with OPENAI_API_KEY.');
+      console.warn(`OpenAI API may not be properly configured. Set up your .env.local file with OPENAI_API_KEY. Current model: ${OPENAI_MODEL} - Make sure your account has access to this model.`);
       warningShown = true;
     }
     

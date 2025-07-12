@@ -1,9 +1,6 @@
 "use client";
 
 import { handleImageFile } from "../../handlers/imageHandler";
-import { handlePdfFile } from "../../handlers/pdfHandler";
-import { handleDocumentFile } from "../../handlers/documentHandler";
-import { handleUrlInput } from "../../handlers/urlHandler";
 import { getFileType } from "../../handlers/fileTypeHelper";
 
 import React, { useEffect, useState } from "react";
@@ -26,15 +23,14 @@ export default function UploadPage() {
   const [uploadStatus, setUploadStatus] = useState(null);
   const [fileName, setFileName] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [urlInput, setUrlInput] = useState('');
-  const [activeTab, setActiveTab] = useState('upload'); // 'upload' or 'url'
   const [showOverlay, setShowOverlay] = useState(false);
   const [overlayMessage, setOverlayMessage] = useState('');
-  const [processingItem, setProcessingItem] = useState(''); // File name or URL being processed
+  const [processingItem, setProcessingItem] = useState(''); // File name being processed
   const [isVideoExpanded, setIsVideoExpanded] = useState(false);
   const [audioElement, setAudioElement] = useState(null);
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -197,66 +193,56 @@ export default function UploadPage() {
         // Process file asynchronously
         const processFile = async () => {
           try {
-            let result;
+            // Show overlay and set processing status before handling any file type
+            setShowOverlay(true);
+            setProcessingItem(selectedFile.name);
             
             switch (fileType) {
               case 'image':
                 console.log("Sending to image handler...");
-                result = await handleImageFile(selectedFile, currentUser?.uid, userData);
+                setOverlayMessage('Processing your image...');
+                setUploadStatus('processing');
+                
+                // Keep overlay visible throughout by wrapping the setter
+                const keepOverlayVisible = () => {
+                  setShowOverlay(true);
+                  return true;
+                };
+                
+                await handleImageFile(
+                  selectedFile, 
+                  setFileName, 
+                  setUploadStatus, 
+                  setOverlayMessage, 
+                  keepOverlayVisible
+                );
                 break;
               case 'pdf':
                 console.log("Sending to PDF handler...");
-                result = await handlePdfFile(selectedFile, currentUser?.uid, userData);
+                await handlePdfFile(selectedFile, setFileName, setUploadStatus);
                 break;
               case 'document':
                 console.log("Sending to document handler...");
-                result = await handleDocumentFile(selectedFile, currentUser?.uid, userData);
+                await handleDocumentFile(selectedFile, setFileName, setUploadStatus);
                 break;
               default:
                 throw new Error("Unsupported file type");
             }
             
-            // Handle success result
-            setUploadStatus('success');
-            setOverlayMessage(`Success! Your file has been processed.`);
-            console.log(result.message);
+            // The handlers now manage:
+            // - Setting upload status
+            // - Showing success/error messages
+            // - Storing results in localStorage
+            // - Redirecting to the explanation page
             
-            // Update local state to reflect any count changes made by the handler
-            if (result.updatedUploadCount !== undefined && userData) {
-              userData.uploadCount = result.updatedUploadCount;
-            }              // If the handler indicates we should redirect, wait briefly then redirect
-              if (result.shouldRedirect && result.redirectUrl) {
-                // Update message to indicate redirection
-                setTimeout(() => {
-                  setOverlayMessage('Redirecting to explanation...');
-                  // Then redirect after a moment
-                  setTimeout(() => {
-                    router.push(result.redirectUrl);
-                  }, 1000);
-                }, 1000);
-            } else {
-              // No redirection needed, just reset after displaying success (3 seconds)
-              setTimeout(() => {
-                setShowOverlay(false);
-                setUploadStatus(null);
-                setFileName('');
-                setSelectedFile(null);
-              }, 3000);
-            }
+            // Just for UI feedback in this component:
+            setOverlayMessage('Success! Your file has been processed.');
             
           } catch (error) {
-            // Handle error case
-            setUploadStatus('error');
+            // This will only run if there's an error calling the handler function itself
+            // Most error handling is now done inside the handler functions
+            console.error("Error calling file handler:", error);
             setOverlayMessage(`Error: ${error.message || "Processing failed"}`);
-            console.error("Processing failed:", error);
-            
-            // Reset after error display (3 seconds)
-            setTimeout(() => {
-              setShowOverlay(false);
-              setUploadStatus(null);
-              setFileName('');
-              setSelectedFile(null);
-            }, 3000);
           }
         };
         
@@ -280,55 +266,24 @@ export default function UploadPage() {
         // Process URL asynchronously
         const processUrl = async () => {
           try {
-            // Send the URL to the handler along with user data for processing
-            const result = await handleUrlInput(urlInput, selectedLanguage, currentUser?.uid, userData);
+            // Send the URL to the handler
+            // The handler now manages success/error states and redirection internally
+            await handleUrl(urlInput, setFileName, setUploadStatus);
             
-            if (result.success) {
-              setUploadStatus('success');
-              setOverlayMessage('Success! Your URL has been processed.');
-              console.log(result.message);
-              
-              // Update local state to reflect any count changes made by the handler
-              if (result.updatedUploadCount !== undefined && userData) {
-                userData.uploadCount = result.updatedUploadCount;
-              }
-              
-              // If the handler indicates we should redirect, wait briefly then redirect
-              if (result.shouldRedirect && result.redirectUrl) {
-                // Update message to indicate redirection
-                setTimeout(() => {
-                  setOverlayMessage('Redirecting to explanation...');
-                  // Then redirect after a moment
-                  setTimeout(() => {
-                    router.push(result.redirectUrl);
-                  }, 1000);
-                }, 1000);
-              } else {
-                // No redirection needed, just reset after displaying success (3 seconds)
-                setTimeout(() => {
-                  setShowOverlay(false);
-                  setUploadStatus(null);
-                  setFileName('');
-                  setUrlInput('');
-                }, 3000);
-              }
-            } else {
-              throw new Error(result.message || "URL processing failed");
-            }
+            // The handleUrl function will handle:
+            // - Setting upload status
+            // - Showing success/error messages
+            // - Storing results in localStorage
+            // - Redirecting to the explanation page
+            
+            // Just for UI feedback in this component:
+            setOverlayMessage('Success! Your URL has been processed.');
             
           } catch (error) {
-            // Handle error case
-            setUploadStatus('error');
+            // This will only run if there's an error calling the function itself
+            // Most error handling is now done inside the handleUrl function
+            console.error("Error calling URL handler:", error);
             setOverlayMessage(`Error: ${error.message || "URL processing failed"}`);
-            console.error("URL processing failed:", error);
-            
-            // Reset after error display (3 seconds)
-            setTimeout(() => {
-              setShowOverlay(false);
-              setUploadStatus(null);
-              setFileName('');
-              setUrlInput('');
-            }, 3000);
           }
         };
         
@@ -871,7 +826,7 @@ export default function UploadPage() {
       </div>
       <Footer hideVideo={true} />
 
-      {/* Processing Overlay */}
+      {/* Processing Overlay - always show during processing, success, or error states */}
       {showOverlay && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center">
           {/* Backdrop - dark blurred overlay that covers everything including navbar */}
@@ -890,7 +845,7 @@ export default function UploadPage() {
                   </div>
                   <h3 className="text-3xl font-bold text-gray-800 mb-3">Processing</h3>
                   <p className="text-gray-600 mb-6 text-lg">
-                    Please wait while we analyze your content
+                    {overlayMessage || "Please wait while we analyze your content"}
                   </p>
                 </>
               )}
@@ -904,8 +859,16 @@ export default function UploadPage() {
                   </div>
                   <h3 className="text-3xl font-bold text-gray-800 mb-3">Success!</h3>
                   <p className="text-gray-600 mb-2 text-lg">
-                    Your content has been processed successfully
+                    {overlayMessage || "Your content has been processed successfully"}
                   </p>
+                  <div className="text-sm text-gray-500 mt-2">
+                    Redirecting to results...
+                  </div>
+                  <button 
+                    onClick={() => { window.location.href = '/explanation'; }}
+                    className="mt-6 px-6 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors">
+                    Go to Results
+                  </button>
                 </>
               )}
 
@@ -917,9 +880,32 @@ export default function UploadPage() {
                     </svg>
                   </div>
                   <h3 className="text-3xl font-bold text-gray-800 mb-3">Error</h3>
-                  <p className="text-gray-600 mb-2 text-lg">
-                    {overlayMessage.replace('Error: ', '')}
-                  </p>
+                  {overlayMessage.includes('FILE_TOO_LARGE') ? (
+                    <>
+                      <p className="text-gray-600 mb-4 text-lg">
+                        This file is too large to analyze
+                      </p>
+                      <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-3">
+                        <p className="text-gray-600 mb-2 text-md">
+                          <strong>Tip:</strong> Try taking screenshots of the important parts of your form and uploading those images instead.
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                          Screenshots are easier to process and will give you faster results.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-gray-600 mb-2 text-lg">
+                        {overlayMessage.replace('Error: ', '')}
+                      </p>
+                      <button 
+                        onClick={() => { setShowOverlay(false); }}
+                        className="mt-6 px-6 py-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors">
+                        Close
+                      </button>
+                    </>
+                  )}
                 </>
               )}
             </div>
