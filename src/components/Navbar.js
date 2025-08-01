@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from 'next/navigation';
 import Link from "next/link";
+import Image from "next/image";
 import { SparklesIcon, CloudArrowUpIcon } from '@heroicons/react/24/solid';
 import { SparklesIcon as SparklesOutlineIcon } from '@heroicons/react/24/outline';
 import BrandButton from "./BrandButton";
@@ -15,6 +16,7 @@ export default function Navbar({ showUpgradeButton = false }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isFeatureDropdownOpen, setIsFeatureDropdownOpen] = useState(false);
   const [userData, setUserData] = useState(null);
   const { currentUser, logout } = useAuth();
   const router = useRouter();
@@ -101,12 +103,117 @@ export default function Navbar({ showUpgradeButton = false }) {
         
         {/* Desktop Menu - hidden on mobile */}
         <div className="navbar-menu desktop-menu">
-          <button 
-            onClick={() => scrollToSection("features")} 
-            className="navbar-menu-item"
-          >
-            Features
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsFeatureDropdownOpen(!isFeatureDropdownOpen)}
+              onMouseEnter={() => setIsFeatureDropdownOpen(true)}
+              className="navbar-menu-item flex items-center gap-1"
+            >
+              Features
+              <svg 
+                className={`w-4 h-4 transition-transform ${isFeatureDropdownOpen ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            
+            {isFeatureDropdownOpen && (
+              <div 
+                className="absolute top-full left-0 mt-2 py-3 w-72 bg-white rounded-xl shadow-lg border border-gray-100 z-50"
+                onMouseLeave={() => setIsFeatureDropdownOpen(false)}
+              >
+                <div className="px-4 py-2 border-b border-gray-100">
+                  <h3 className="font-bold text-gray-900 text-sm">Form Types</h3>
+                </div>
+                <Link href="/immigration-forms" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  Immigration Forms
+                </Link>
+                <Link href="/medical-forms" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  Medical Forms
+                </Link>
+                <Link href="/legal-forms" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  Legal Forms
+                </Link>
+                <Link href="/school-scholarship-forms" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  School & Scholarship Forms
+                </Link>
+                <Link href="/business-forms" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  Business Forms
+                </Link>
+                
+                <div className="px-4 py-2 border-b border-t border-gray-100 mt-2">
+                  <h3 className="font-bold text-gray-900 text-sm">Language Support</h3>
+                </div>
+                <Link href="/form-explanation-in-your-language" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  50+ Languages Available
+                </Link>
+                <Link href="/form-help-spanish" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Image
+                      src="/flags/es.webp"
+                      alt="Spanish flag"
+                      width={20}
+                      height={14}
+                      className="rounded-sm object-cover"
+                    />
+                    <span>Spanish / Español</span>
+                  </div>
+                </Link>
+                <Link href="/form-help-chinese" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Image
+                      src="/flags/cn.webp"
+                      alt="Chinese flag"
+                      width={20}
+                      height={14}
+                      className="rounded-sm object-cover"
+                    />
+                    <span>Chinese / 中文</span>
+                  </div>
+                </Link>
+                <Link href="/form-help-arabic" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Image
+                      src="/flags/sa.webp"
+                      alt="Arabic flag"
+                      width={20}
+                      height={14}
+                      className="rounded-sm object-cover"
+                    />
+                    <span>Arabic / العربية</span>
+                  </div>
+                </Link>
+                <Link href="/form-help-french" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Image
+                      src="/flags/fr.webp"
+                      alt="French flag"
+                      width={20}
+                      height={14}
+                      className="rounded-sm object-cover"
+                    />
+                    <span>French / Français</span>
+                  </div>
+                </Link>
+                <Link href="/form-help-german" className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-[#2196F3] text-sm">
+                  <div className="flex items-center space-x-2">
+                    <Image
+                      src="/flags/de.webp"
+                      alt="German flag"
+                      width={20}
+                      height={14}
+                      className="rounded-sm object-cover"
+                    />
+                    <span>German / Deutsch</span>
+                  </div>
+                </Link>
+              </div>
+            )}
+          </div>
+          
           <button 
             onClick={() => scrollToSection("upload")}
             className="navbar-menu-item"
@@ -175,7 +282,7 @@ export default function Navbar({ showUpgradeButton = false }) {
               </div>
               
               {/* Upload/Upgrade Icon Button - desktop only */}
-              {showUpgradeButton ? (
+              {showUpgradeButton && userData?.planType !== 'pro' ? (
                 <Link href="/#pricing" className="ml-3">
                   <button 
                     className="flex items-center justify-center px-4 py-2 text-white rounded-full transition-all gap-2"
@@ -248,34 +355,140 @@ export default function Navbar({ showUpgradeButton = false }) {
           )}
         </div>
 
-        {/* Mobile Menu Button - Only visible on mobile */}
-        <button 
-          className={`mobile-menu-button ${isMobileMenuOpen ? "active" : ""}`}
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          aria-label="Toggle menu"
-          aria-expanded={isMobileMenuOpen}
-        >
-          <div className={`hamburger ${isMobileMenuOpen ? "open" : ""}`}>
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </button>
+        {/* Mobile Actions - Only visible on mobile */}
+        <div className="mobile-navbar-actions">
+          {currentUser ? (
+            showUpgradeButton && userData?.planType !== 'pro' ? (
+              <Link href="/#pricing">
+                <button 
+                  className="mobile-navbar-btn-with-text"
+                  style={{
+                    background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                    boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)',
+                  }}
+                >
+                  <SparklesIcon className="h-4 w-4" />
+                  <span>Upgrade</span>
+                </button>
+              </Link>
+            ) : (
+              <Link href="/upload">
+                <button 
+                  className="mobile-navbar-btn-with-text"
+                  style={{
+                    background: 'linear-gradient(135deg, #64B5F6, #2196F3)',
+                    boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)',
+                  }}
+                >
+                  <CloudArrowUpIcon className="h-4 w-4" />
+                  <span>Upload</span>
+                </button>
+              </Link>
+            )
+          ) : (
+            <Link href="/register">
+              <button 
+                className="mobile-navbar-btn-with-text"
+                style={{
+                  background: 'linear-gradient(135deg, #64B5F6, #2196F3)',
+                  boxShadow: '0 2px 8px rgba(33, 150, 243, 0.3)',
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <span>Register</span>
+              </button>
+            </Link>
+          )}
+          
+          {/* Mobile Menu Button - Always visible */}
+          <button 
+            className={`mobile-menu-button ${isMobileMenuOpen ? "active" : ""}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+            aria-expanded={isMobileMenuOpen}
+          >
+            <div className={`hamburger ${isMobileMenuOpen ? "open" : ""}`}>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu dropdown */}
       <div className={`mobile-menu ${isMobileMenuOpen ? "open" : ""}`}>
         <div className="mobile-menu-section">
           <h3 className="mobile-menu-section-title">Navigation</h3>
-          <button 
-            onClick={() => scrollToSection("features")} 
-            className="mobile-menu-item"
-          >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-            Features
-          </button>
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2 px-4">Form Types</h4>
+            <Link href="/immigration-forms" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Immigration Forms
+            </Link>
+            <Link href="/medical-forms" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>
+              Medical Forms
+            </Link>
+            <Link href="/legal-forms" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+              </svg>
+              Legal Forms
+            </Link>
+            <Link href="/school-scholarship-forms" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              School & Scholarships
+            </Link>
+            <Link href="/business-forms" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Business Forms
+            </Link>
+          </div>
+          
+          <div className="mb-4">
+            <h4 className="text-sm font-semibold text-gray-700 mb-2 px-4">Languages</h4>
+            <Link href="/form-explanation-in-your-language" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5h12l2 7-2 7H3V5zm0 0l7 7-7 7" />
+              </svg>
+              50+ Languages
+            </Link>
+            <Link href="/form-help-spanish" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <div className="flex items-center space-x-2">
+                <Image
+                  src="/flags/es.webp"
+                  alt="Spanish flag"
+                  width={20}
+                  height={14}
+                  className="rounded-sm object-cover"
+                />
+                <span>Spanish</span>
+              </div>
+            </Link>
+            <Link href="/form-help-chinese" className="mobile-menu-item" onClick={() => setIsMobileMenuOpen(false)}>
+              <div className="flex items-center space-x-2">
+                <Image
+                  src="/flags/cn.webp"
+                  alt="Chinese flag"
+                  width={20}
+                  height={14}
+                  className="rounded-sm object-cover"
+                />
+                <span>Chinese</span>
+              </div>
+            </Link>
+          </div>
           <button 
             onClick={() => scrollToSection("upload")}
             className="mobile-menu-item"
@@ -350,44 +563,70 @@ export default function Navbar({ showUpgradeButton = false }) {
                   </Link>
                 </div>
                 
-                {showUpgradeButton ? (
+                {showUpgradeButton && userData?.planType !== 'pro' ? (
                   <Link href="/#pricing" className="w-full mb-4">
-                    <BrandButton
-                      style={{ 
-                        width: "100%", 
-                        margin: "0.5rem 0",
-                        padding: '0.75rem 1rem',
+                    <button 
+                      className="w-full flex items-center justify-center py-3 px-4 text-white rounded-full transition-all gap-2"
+                      style={{
                         background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        margin: "0.5rem 0"
                       }}
                     >
-                      <SparklesIcon className="h-5 w-5 mr-2" />
-                      Upgrade Plan
-                    </BrandButton>
+                      <SparklesIcon className="h-4 w-4" />
+                      <span>Upgrade Plan</span>
+                    </button>
                   </Link>
                 ) : (
                   <Link href="/upload" className="w-full mb-4">
-                    <BrandButton
-                      style={{ 
-                        width: "100%", 
-                        margin: "0.5rem 0",
-                        padding: '0.75rem 1rem'
+                    <button 
+                      className="w-full flex items-center justify-center py-3 px-4 text-white rounded-full transition-all gap-2"
+                      style={{
+                        background: 'linear-gradient(135deg, #64B5F6, #2196F3)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        margin: "0.5rem 0"
                       }}
                     >
-                      <CloudArrowUpIcon className="h-5 w-5 mr-2" />
-                      Upload Form
-                    </BrandButton>
+                      <CloudArrowUpIcon className="h-4 w-4" />
+                      <span>Upload Form</span>
+                    </button>
                   </Link>
                 )}
                 
                 <div className="border-t border-gray-200 pt-3 mt-2">
                   <button 
-                    className="w-full py-3 px-4 rounded-xl font-medium text-red-600 hover:bg-red-50 transition-all flex items-center justify-center gap-2 border-2 border-red-200"
+                    className="w-full flex items-center justify-center py-3 px-4 text-red-600 rounded-full transition-all gap-2"
+                    style={{
+                      background: 'white',
+                      border: '2px solid #dc2626',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 15px rgba(220, 38, 38, 0.2)',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      margin: "0.5rem 0"
+                    }}
                     onClick={handleLogout}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = '#fef2f2';
+                      e.target.style.transform = 'scale(1.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'white';
+                      e.target.style.transform = 'scale(1)';
+                    }}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
-                    Sign Out
+                    <span>Sign Out</span>
                   </button>
                 </div>
               </>
@@ -396,25 +635,58 @@ export default function Navbar({ showUpgradeButton = false }) {
                 <div className="mobile-menu-section">
                   <h3 className="mobile-menu-section-title">Account</h3>
                   <Link href="/login" className="w-full mb-2">
-                    <button className="w-full py-3 px-4 rounded-xl font-medium text-brand-blue border-2 border-brand-blue transition-all flex items-center justify-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <button 
+                      className="w-full flex items-center justify-center py-3 px-4 text-brand-blue rounded-full transition-all gap-2"
+                      style={{
+                        background: 'white',
+                        border: '2px solid var(--brand-blue)',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(33, 150, 243, 0.2)',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        margin: "0.5rem 0"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = '#f0f8ff';
+                        e.target.style.transform = 'scale(1.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'white';
+                        e.target.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                       </svg>
-                      Login
+                      <span>Login</span>
                     </button>
                   </Link>
                   <Link href="/register" className="w-full">
-                    <BrandButton
-                      style={{ 
-                        width: "100%", 
-                        padding: '0.75rem 1rem'
+                    <button 
+                      className="w-full flex items-center justify-center py-3 px-4 text-white rounded-full transition-all gap-2"
+                      style={{
+                        background: 'linear-gradient(135deg, #64B5F6, #2196F3)',
+                        border: 'none',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(33, 150, 243, 0.3)',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        margin: "0.5rem 0"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.target.style.background = 'linear-gradient(135deg, #2196F3, #1976D2)';
+                        e.target.style.transform = 'scale(1.02)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.background = 'linear-gradient(135deg, #64B5F6, #2196F3)';
+                        e.target.style.transform = 'scale(1)';
                       }}
                     >
-                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                       </svg>
-                      Register
-                    </BrandButton>
+                      <span>Register</span>
+                    </button>
                   </Link>
                 </div>
               </>

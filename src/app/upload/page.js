@@ -2,6 +2,8 @@
 
 import { handleImageFile } from "../../handlers/imageHandler";
 import { getFileType } from "../../handlers/fileTypeHelper";
+import { checkUploadPermission } from "@/lib/ipRestrictions";
+import { useUploadQuota } from "@/hooks/useUploadQuota";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,6 +19,7 @@ import VideoAudioPlayer from "@/components/VideoAudioPlayer";
 export default function UploadPage() {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
+  const { quotaInfo, isRestricted, restrictionReason, restrictionType, remaining } = useUploadQuota(userData, currentUser?.uid);
   const [isClient, setIsClient] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -31,6 +34,7 @@ export default function UploadPage() {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  // Removed tab and url input state, only upload section is shown
 
   useEffect(() => {
     setIsClient(true);
@@ -127,12 +131,29 @@ export default function UploadPage() {
   // Store the selected file for later processing
   const [selectedFile, setSelectedFile] = useState(null);
   
-  const handleFileUpload = (file) => {
-    // Check if user has reached their upload limit
-    if (userData?.planType !== 'pro' && 
-        (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
-      alert("You've reached your upload limit. Please upgrade your plan to continue uploading.");
-      return;
+  const handleFileUpload = async (file) => {
+    // Check upload permissions including IP restrictions
+    try {
+      const permission = await checkUploadPermission(currentUser?.uid, userData);
+      
+      if (!permission.canUpload) {
+        let message = permission.reason;
+        
+        if (permission.restrictionType === 'ip_overuse') {
+          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue uploading, or use a different network.";
+        }
+        
+        alert(message);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking upload permission:', error);
+      // Continue with fallback validation if IP check fails
+      if (userData?.planType !== 'pro' && 
+          (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
+        alert("You've reached your upload limit. Please upgrade your plan to continue uploading.");
+        return;
+      }
     }
     
     // Determine file type using our helper function
@@ -161,137 +182,85 @@ export default function UploadPage() {
     setSelectedLanguage(languageCode);
   };
 
-  const handleUrlInputChange = (e) => {
-    setUrlInput(e.target.value);
-  };
 
-  const handleGenerateExplanation = () => {
-    // Check if user has reached their upload limit (for both file and URL)
-    if (userData?.planType !== 'pro' && 
-        (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
-      alert("You've reached your upload limit. Please upgrade your plan to continue.");
-      return;
+
+  const handleGenerateExplanation = async () => {
+    // Check upload permissions including IP restrictions
+    try {
+      const permission = await checkUploadPermission(currentUser?.uid, userData);
+      
+      if (!permission.canUpload) {
+        let message = permission.reason;
+        
+        if (permission.restrictionType === 'ip_overuse') {
+          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue, or use a different network.";
+        }
+        
+        alert(message);
+        return;
+      }
+    } catch (error) {
+      console.error('Error checking upload permission:', error);
+      // Continue with fallback validation if IP check fails
+      if (userData?.planType !== 'pro' && 
+          (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
+        alert("You've reached your upload limit. Please upgrade your plan to continue.");
+        return;
+      }
     }
     
-    if (activeTab === 'upload') {
-      // Process the uploaded file
-      if (selectedFile && fileName) {
-        console.log('Processing file:', fileName, 'in language:', selectedLanguage);
-        
-        // Show processing state with overlay
-        setProcessingItem(fileName);
-        setUploadStatus('processing'); // Changed from 'uploading' to 'processing' for clarity
-        setOverlayMessage('Processing your file... Please wait');
-        setShowOverlay(true);
-        
-        // Determine file type using our helper function
-        const fileType = getFileType(selectedFile);
-        
-        // Send to appropriate handler based on file type
-        let result = { success: false, message: 'Unknown file type' };
-        
-        // Process file asynchronously
-        const processFile = async () => {
-          try {
-            // Show overlay and set processing status before handling any file type
-            setShowOverlay(true);
-            setProcessingItem(selectedFile.name);
-            
-            switch (fileType) {
-              case 'image':
-                console.log("Sending to image handler...");
-                setOverlayMessage('Processing your image...');
-                setUploadStatus('processing');
-                
-                // Keep overlay visible throughout by wrapping the setter
-                const keepOverlayVisible = () => {
-                  setShowOverlay(true);
-                  return true;
-                };
-                
-                await handleImageFile(
-                  selectedFile, 
-                  setFileName, 
-                  setUploadStatus, 
-                  setOverlayMessage, 
-                  keepOverlayVisible
-                );
-                break;
-              case 'pdf':
-                console.log("Sending to PDF handler...");
-                await handlePdfFile(selectedFile, setFileName, setUploadStatus);
-                break;
-              case 'document':
-                console.log("Sending to document handler...");
-                await handleDocumentFile(selectedFile, setFileName, setUploadStatus);
-                break;
-              default:
-                throw new Error("Unsupported file type");
-            }
-            
-            // The handlers now manage:
-            // - Setting upload status
-            // - Showing success/error messages
-            // - Storing results in localStorage
-            // - Redirecting to the explanation page
-            
-            // Just for UI feedback in this component:
-            setOverlayMessage('Success! Your file has been processed.');
-            
-          } catch (error) {
-            // This will only run if there's an error calling the handler function itself
-            // Most error handling is now done inside the handler functions
-            console.error("Error calling file handler:", error);
-            setOverlayMessage(`Error: ${error.message || "Processing failed"}`);
+    // Only process uploaded file
+    if (selectedFile && fileName) {
+      console.log('Processing file:', fileName, 'in language:', selectedLanguage);
+      setProcessingItem(fileName);
+      setUploadStatus('processing');
+      setOverlayMessage('Processing your file... Please wait');
+      setShowOverlay(true);
+      const fileType = getFileType(selectedFile);
+      const processFile = async () => {
+        try {
+          setShowOverlay(true);
+          setProcessingItem(selectedFile.name);
+          switch (fileType) {
+            case 'image':
+              console.log("Sending to image handler...");
+              setOverlayMessage('Processing your image...');
+              setUploadStatus('processing');
+              const keepOverlayVisible = () => {
+                setShowOverlay(true);
+                return true;
+              };
+              await handleImageFile(
+                selectedFile, 
+                setFileName, 
+                setUploadStatus, 
+                setOverlayMessage, 
+                keepOverlayVisible,
+                userData,
+                currentUser?.uid,
+                selectedLanguage
+              );
+              break;
+            case 'pdf':
+              console.log("Sending to PDF handler...");
+              await handlePdfFile(selectedFile, setFileName, setUploadStatus);
+              break;
+            case 'document':
+              console.log("Sending to document handler...");
+              await handleDocumentFile(selectedFile, setFileName, setUploadStatus);
+              break;
+            default:
+              throw new Error("Unsupported file type");
           }
-        };
-        
-        // Start the processing after a short delay to ensure overlay is visible
-        setTimeout(() => {
-          processFile();
-        }, 500);
-      }
-    } else {
-      // Handle URL case
-      if (urlInput.trim()) {
-        console.log('Processing URL:', urlInput, 'in language:', selectedLanguage);
-        
-        // Show processing state with overlay
-        setFileName(urlInput); // Use URL as the "file name" for display
-        setProcessingItem(urlInput);
-        setUploadStatus('processing');
-        setOverlayMessage('Processing your URL... Please wait');
-        setShowOverlay(true);
-        
-        // Process URL asynchronously
-        const processUrl = async () => {
-          try {
-            // Send the URL to the handler
-            // The handler now manages success/error states and redirection internally
-            await handleUrl(urlInput, setFileName, setUploadStatus);
-            
-            // The handleUrl function will handle:
-            // - Setting upload status
-            // - Showing success/error messages
-            // - Storing results in localStorage
-            // - Redirecting to the explanation page
-            
-            // Just for UI feedback in this component:
-            setOverlayMessage('Success! Your URL has been processed.');
-            
-          } catch (error) {
-            // This will only run if there's an error calling the function itself
-            // Most error handling is now done inside the handleUrl function
-            console.error("Error calling URL handler:", error);
-            setOverlayMessage(`Error: ${error.message || "URL processing failed"}`);
-          }
-        };
-        
-        // Start the processing after a short delay to ensure overlay is visible
-        setTimeout(() => {
-          processUrl();
-        }, 500);
-      }
+          setOverlayMessage('Success! Your file has been processed.');
+        } catch (error) {
+          console.error("Error calling file handler:", error);
+          setOverlayMessage(`Error: ${error.message || "Processing failed"}`);
+        }
+      };
+      setTimeout(() => {
+        processFile();
+      }, 500);
     }
   };
 
@@ -444,13 +413,13 @@ export default function UploadPage() {
       <div style={{ paddingTop: "80px" }}> {/* Add padding to account for fixed navbar */}
         <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 flex items-center justify-center py-12 relative">
           {/* Right Side Video Section */}
-          <div className={`fixed right-8 bottom-8 z-40 transition-all duration-700 ease-in-out ${
+          <div className={`fixed right-8 bottom-8 z-40 transition-all duration-700 ease-in-out mobile-video-section ${
             isVideoExpanded ? 'h-auto' : 'h-16'
           }`}>
             {/* Toggle Button */}
             <button
               onClick={toggleVideoSection}
-              className="absolute top-0 right-6 w-14 h-14 bg-gradient-to-r from-[#2196F3] to-[#1976D2] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 z-50 flex items-center justify-center"
+              className="absolute top-0 right-6 w-14 h-14 bg-gradient-to-r from-[#2196F3] to-[#1976D2] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 z-50 flex items-center justify-center mobile-video-toggle"
               style={{ transform: 'translateY(-50%)' }}
             >
               <svg 
@@ -469,7 +438,7 @@ export default function UploadPage() {
             </button>
 
             {/* Video Container */}
-            <div className={`w-96 bg-white rounded-3xl shadow-2xl border-2 border-gray-200 overflow-hidden transition-all duration-700 ${
+            <div className={`w-96 bg-white rounded-3xl shadow-2xl border-2 border-gray-200 overflow-hidden transition-all duration-700 mobile-video-container ${
               isVideoExpanded ? 'opacity-100' : 'opacity-0 h-0'
             }`}>
               {/* Video Content */}
@@ -503,53 +472,82 @@ export default function UploadPage() {
           {/* Main Content */}
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {/* Welcome Section */}
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center mb-4">
-                <h2 className="text-3xl font-bold text-gray-900 font-poppins mr-3">
-                  Welcome, {currentUser?.displayName || 'User'}!
+            <div className="text-center mb-6 md:mb-6 mb-10">
+              <div className="mb-4">
+                <h2 className="text-base md:text-3xl font-bold text-gray-900 font-poppins text-center">
+                  Welcome, {currentUser?.displayName || 'User'}!{' '}
+                  <Image
+                    src="/hand.png"
+                    alt="Waving hand"
+                    width={28}
+                    height={28}
+                    className="waving-hand md:w-8 md:h-8 w-7 h-7 inline-block"
+                    style={{
+                      animation: 'wave 1.5s ease-in-out infinite',
+                      transformOrigin: '70% 70%',
+                      verticalAlign: 'baseline'
+                    }}
+                  />
                 </h2>
-                <Image
-                  src="/hand.png"
-                  alt="Waving hand"
-                  width={32}
-                  height={32}
-                  className="waving-hand"
-                  style={{
-                    animation: 'wave 1.5s ease-in-out infinite',
-                    transformOrigin: '70% 70%'
-                  }}
-                />
               </div>
-              <p className="text-gray-600 text-lg">
+              <p className="text-gray-600 text-base md:text-lg">
                 Ready to upload and analyze your forms? Let's get started!
               </p>
             </div>
 
-            {/* Usage Limit Bar - Simplified */}
+            {/* Add spacing between welcome and upload/explanation section on mobile only */}
+            <div className="block md:hidden h-8"></div>
+
+            {/* Usage Limit Bar - With IP Restrictions */}
             {userData?.planType !== 'pro' && (
-              <div className="flex items-center mb-6">
-                <div className="w-full">
-                  <div className="flex justify-between mb-1 items-center">
-                    <span className="text-xs font-medium text-gray-600">
-                      {userData?.uploadCount || 0}/{userData?.planType === 'basic' ? '15' : '3'} forms
-                    </span>
-                    {((userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) && (
-                      <a href="/#pricing" className="text-xs font-medium text-blue-600">Upgrade →</a>
-                    )}
+              <div className="mb-6">
+                {isRestricted && restrictionType === 'ip_overuse' && (
+                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <div className="flex items-center space-x-2">
+                      <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-sm text-red-700">
+                        <span className="font-medium">Uploads blocked:</span> Multiple free accounts detected from your location.
+                      </p>
+                    </div>
+                    <div className="mt-2 text-xs text-red-600">
+                      <a href="/#pricing" className="font-medium underline hover:text-red-800">Upgrade to Pro</a> to continue uploading, or use a different network.
+                    </div>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5">
-                    <div 
-                      className={`h-1.5 rounded-full transition-all duration-500 ${
-                        userData?.planType === 'basic' 
-                          ? 'bg-blue-500' 
-                          : ((userData?.uploadCount || 0) >= 3) 
-                            ? 'bg-red-500' 
-                            : 'bg-green-500'
-                      }`}
-                      style={{ 
-                        width: `${Math.min(100, ((userData?.uploadCount || 0) / (userData?.planType === 'basic' ? 15 : 3)) * 100)}%` 
-                      }}
-                    ></div>
+                )}
+                
+                <div className="flex items-center">
+                  <div className="w-full">
+                    <div className="flex justify-between mb-1 items-center">
+                      <span className="text-xs font-medium text-gray-600">
+                        {userData?.uploadCount || 0}/{quotaInfo?.quota === Infinity ? '∞' : (quotaInfo?.quota || (userData?.planType === 'basic' ? 15 : 3))} forms
+                        {isRestricted && restrictionType === 'ip_overuse' && (
+                          <span className="ml-2 text-red-500">(Blocked)</span>
+                        )}
+                      </span>
+                      {(isRestricted || (userData?.uploadCount || 0) >= (quotaInfo?.quota || (userData?.planType === 'basic' ? 15 : 3))) && (
+                        <a href="/#pricing" className="text-xs font-medium text-blue-600">Upgrade →</a>
+                      )}
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-1.5">
+                      <div 
+                        className={`h-1.5 rounded-full transition-all duration-500 ${
+                          isRestricted && restrictionType === 'ip_overuse'
+                            ? 'bg-red-500'
+                            : userData?.planType === 'basic' 
+                            ? 'bg-blue-500' 
+                            : ((userData?.uploadCount || 0) >= (quotaInfo?.quota || 3)) 
+                              ? 'bg-red-500' 
+                              : 'bg-green-500'
+                        }`}
+                        style={{ 
+                          width: isRestricted && restrictionType === 'ip_overuse' 
+                            ? '100%' 
+                            : `${Math.min(100, ((userData?.uploadCount || 0) / (quotaInfo?.quota || (userData?.planType === 'basic' ? 15 : 3))) * 100)}%` 
+                        }}
+                      ></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -561,41 +559,11 @@ export default function UploadPage() {
               onLanguageChange={handleLanguageChange}
             />
 
-            {/* Tab Navigation */}
-            <div className="flex bg-gray-100 rounded-2xl p-1 mb-8">
-              <button
-                onClick={() => setActiveTab('upload')}
-                className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'upload'
-                    ? 'bg-white text-[#2196F3] shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-                style={{ fontFamily: 'var(--font-text)' }}
-              >
-                📄 Upload Document
-              </button>
-              <button
-                onClick={() => setActiveTab('url')}
-                className={`flex-1 py-3 px-6 rounded-xl font-semibold transition-all duration-300 ${
-                  activeTab === 'url'
-                    ? 'bg-white text-[#2196F3] shadow-sm'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-                style={{ fontFamily: 'var(--font-text)' }}
-              >
-                🔗 Upload URL
-              </button>
-            </div>
 
-            {/* Content Container with Animation */}
-            <div className={`relative overflow-hidden transition-all duration-500 ease-in-out ${
-              activeTab === 'upload' ? 'max-h-[400px]' : 'max-h-[120px]'
-            }`}>
-              <div 
-                className="flex transition-transform duration-500 ease-in-out"
-                style={{ transform: `translateX(${activeTab === 'upload' ? '0%' : 'calc(-100% - 2rem)'})` }}
-              >
-                {/* Upload Section */}
+
+            {/* Only show the upload section */}
+            <div className="relative overflow-hidden transition-all duration-500 ease-in-out max-h-[400px]">
+              <div className="flex">
                 <div className="w-full flex-shrink-0">
                   <div className={`w-full relative transition-all duration-300 ${uploadStatus === 'success' ? 'scale-105' : ''}`}>
                     <div 
@@ -721,86 +689,19 @@ export default function UploadPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* URL Section */}
-                <div className="w-full flex-shrink-0 ml-8">
-                  <div className="w-full py-8">
-                    <label className="block text-sm font-normal text-gray-700 mb-2" style={{ fontFamily: 'var(--font-text)' }}>
-                      Enter a URL to analyze
-                    </label>
-                    <div className="relative">
-                      {!uploadStatus && (
-                        <>
-                          <input
-                            type="url"
-                            value={urlInput}
-                            onChange={handleUrlInputChange}
-                            placeholder="https://example.com/form-page"
-                            className={`w-full px-4 py-4 border-2 rounded-2xl focus:ring-2 focus:outline-none transition-all duration-200 text-gray-900 placeholder-gray-500 bg-white shadow-sm pr-12
-                              ${activeTab === 'url' ? 'border-blue-200 focus:border-blue-400 focus:ring-blue-200 hover:border-blue-300' : 'border-blue-200'}
-                            `}
-                            style={{ fontFamily: 'var(--font-text)', fontWeight: 'normal' }}
-                          />
-                          <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                            </svg>
-                          </div>
-                        </>
-                      )}
-                      
-                      {uploadStatus === 'processing' && activeTab === 'url' && (
-                        <div className="flex items-center justify-center w-full px-4 py-4 border-2 border-yellow-300 rounded-2xl bg-blue-50">
-                          <div className="text-center">
-                            <svg className="animate-spin w-10 h-10 mb-3 mx-auto text-[#2196F3]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            <span className="text-[#2196F3] font-semibold text-md block mb-1">Processing URL...</span>
-                            <span className="text-sm text-gray-500 block">{urlInput}</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {uploadStatus === 'success' && activeTab === 'url' && (
-                        <div className="flex items-center justify-center w-full px-4 py-4 border-2 border-green-400 rounded-2xl bg-green-50">
-                          <div className="text-center">
-                            <svg className="w-10 h-10 mb-3 mx-auto text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span className="text-green-600 font-semibold text-md block mb-1">URL processed successfully!</span>
-                            <span className="text-sm text-gray-500 block">{urlInput}</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {uploadStatus === 'error' && activeTab === 'url' && (
-                        <div className="flex items-center justify-center w-full px-4 py-4 border-2 border-red-400 rounded-2xl bg-red-50">
-                          <div className="text-center">
-                            <svg className="w-10 h-10 mb-3 mx-auto text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span className="text-red-600 font-semibold text-md block mb-1">URL processing failed</span>
-                            <span className="text-sm text-gray-500 block">{urlInput}</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
 
-            {/* Generate Explanation Button - Outside sliding sections */}
+            {/* Generate Explanation Button - Only for upload */}
             <div className="mt-6">
               <button
                 onClick={handleGenerateExplanation}
-                disabled={(activeTab === 'upload' ? !selectedFile : !urlInput.trim()) || uploadStatus === 'processing'}
+                disabled={!selectedFile || uploadStatus === 'processing'}
                 className={`relative w-full py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-300 transform ${
-                  (activeTab === 'upload' ? selectedFile : urlInput.trim()) && uploadStatus !== 'processing'
+                  selectedFile && uploadStatus !== 'processing'
                     ? 'bg-gradient-to-r from-[#2196F3] to-[#1976D2] text-white hover:from-[#1976D2] hover:to-[#1565C0] hover:scale-105 hover:shadow-2xl shadow-lg border-2 border-transparent hover:border-white/20'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed border-2 border-gray-200'
-                } ${(activeTab === 'upload' ? selectedFile : urlInput.trim()) && uploadStatus !== 'processing' ? 'active:scale-95' : ''}`}
+                } ${selectedFile && uploadStatus !== 'processing' ? 'active:scale-95' : ''}`}
                 style={{ fontFamily: 'var(--font-text)' }}
               >
                 <span className="flex items-center justify-center space-x-3">

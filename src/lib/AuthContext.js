@@ -15,6 +15,7 @@ import {
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { auth, db } from './firebase';
 import { generateTTSGreeting } from './ttsHelper';
+import { trackUserRegistrationIP } from './ipRestrictions';
 
 const AuthContext = createContext();
 
@@ -52,6 +53,38 @@ export const AuthProvider = ({ children }) => {
       };
 
       await setDoc(doc(db, "users", userCredential.user.uid), userDoc);
+      
+      // Track registration IP - Try API first, then fallback to direct approach
+      try {
+        await trackUserRegistrationIP(userCredential.user.uid);
+        console.log('Registration IP tracked successfully via API');
+      } catch (ipError) {
+        console.error('Failed to track registration IP via API:', ipError);
+        
+        // Fallback: Try to get IP from browser and save directly
+        try {
+          // This is a simple fallback - in production you might want to use a different IP service
+          const response = await fetch('https://api.ipify.org?format=json').catch(() => null);
+          let fallbackIP = '127.0.0.1';
+          
+          if (response && response.ok) {
+            const data = await response.json();
+            fallbackIP = data.ip || '127.0.0.1';
+          }
+          
+          // Save IP directly to user document
+          await setDoc(doc(db, "users", userCredential.user.uid), {
+            registrationIP: fallbackIP,
+            ipTrackingMethod: 'fallback',
+            lastUpdated: serverTimestamp()
+          }, { merge: true });
+          
+          console.log('Registration IP saved via fallback method:', fallbackIP);
+        } catch (fallbackError) {
+          console.error('Fallback IP tracking also failed:', fallbackError);
+          // Even fallback failed, but don't prevent registration
+        }
+      }
       
       // Generate TTS greeting for new user
       try {
@@ -153,6 +186,35 @@ export const AuthProvider = ({ children }) => {
         };
 
         await setDoc(userRef, userDoc);
+        
+        // Track registration IP for new Google users
+        try {
+          await trackUserRegistrationIP(userCredential.user.uid);
+          console.log('Registration IP tracked successfully for Google user');
+        } catch (ipError) {
+          console.error('Failed to track registration IP for Google user:', ipError);
+          
+          // Fallback for Google users too
+          try {
+            const response = await fetch('https://api.ipify.org?format=json').catch(() => null);
+            let fallbackIP = '127.0.0.1';
+            
+            if (response && response.ok) {
+              const data = await response.json();
+              fallbackIP = data.ip || '127.0.0.1';
+            }
+            
+            await setDoc(userRef, {
+              registrationIP: fallbackIP,
+              ipTrackingMethod: 'fallback',
+              lastUpdated: serverTimestamp()
+            }, { merge: true });
+            
+            console.log('Google user IP saved via fallback method:', fallbackIP);
+          } catch (fallbackError) {
+            console.error('Fallback IP tracking failed for Google user:', fallbackError);
+          }
+        }
         
         // Generate TTS greeting for new user
         try {
@@ -332,6 +394,35 @@ export const AuthProvider = ({ children }) => {
           };
 
           await setDoc(userRef, userDoc);
+          
+          // Track registration IP for new users detected in auth state change
+          try {
+            await trackUserRegistrationIP(user.uid);
+            console.log('Registration IP tracked successfully for user (auth state change)');
+          } catch (ipError) {
+            console.error('Failed to track registration IP for user (auth state change):', ipError);
+            
+            // Fallback for auth state change users
+            try {
+              const response = await fetch('https://api.ipify.org?format=json').catch(() => null);
+              let fallbackIP = '127.0.0.1';
+              
+              if (response && response.ok) {
+                const data = await response.json();
+                fallbackIP = data.ip || '127.0.0.1';
+              }
+              
+              await setDoc(userRef, {
+                registrationIP: fallbackIP,
+                ipTrackingMethod: 'fallback',
+                lastUpdated: serverTimestamp()
+              }, { merge: true });
+              
+              console.log('Auth state change user IP saved via fallback method:', fallbackIP);
+            } catch (fallbackError) {
+              console.error('Fallback IP tracking failed for auth state change user:', fallbackError);
+            }
+          }
           
           // Generate TTS greeting for new user
           try {

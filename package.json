@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "critters": "^0.0.23",
     "firebase": "^11.9.1",
     "firebase-admin": "^13.4.0",
     "html-to-image": "^1.11.13",

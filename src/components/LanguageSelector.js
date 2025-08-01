@@ -80,7 +80,7 @@ export default function LanguageSelector({ selectedLanguage, onLanguageChange })
   const selectedLang = languages.find(lang => lang.code === selectedLanguage) || languages[0];
   
   // Check if user has pro plan
-  const isPro = userData?.plan === 'pro';
+  const isPro = userData?.planType === 'pro';
 
   // Load dismissed state from localStorage on component mount
   useEffect(() => {

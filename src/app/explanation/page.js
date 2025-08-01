@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/AuthContext";
 import PaginatedFormView from "@/components/PaginatedFormView";
 
 export default function ExplanationPage() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
   const [isClient, setIsClient] = useState(false);
   const [explanation, setExplanation] = useState(null);
@@ -94,6 +94,7 @@ export default function ExplanationPage() {
         fields={explanation.fields || []}
         formTitle={explanation.title || "Form Questionnaire"}
         formSource={explanation.source || ""}
+        userPlan={userData?.planType || 'free'}
       />
     </div>
   );

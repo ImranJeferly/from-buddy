@@ -9,8 +9,9 @@ import '@/styles/paginated-form.css';
  * Component that displays form inputs as a step-by-step wizard in full-screen mode
  * @param {Object} props
  * @param {Array} props.fields - The array of field objects from the explanation
+ * @param {string} props.userPlan - The user's plan type (free, basic, pro)
  */
-const PaginatedFormView = ({ fields = [], formTitle, formSource }) => {
+const PaginatedFormView = ({ fields = [], formTitle, formSource, userPlan = 'free' }) => {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [activeTab, setActiveTab] = useState('explanation'); // For explanation/examples tabs
@@ -249,7 +250,7 @@ const PaginatedFormView = ({ fields = [], formTitle, formSource }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Top navigation with step indicators */}
-      <div className="bg-white border-b border-gray-200 py-3 px-4 sticky top-0 z-20 shadow-sm">
+      <div className="bg-white border-b border-gray-200 py-3 px-4 sticky top-0 z-[9999] shadow-sm">
         <div className="max-w-6xl mx-auto">
           <div className="overflow-x-auto scrollbar-hide" ref={scrollContainerRef}>
             <div className="flex space-x-3 py-2 min-w-max">
@@ -280,7 +281,7 @@ const PaginatedFormView = ({ fields = [], formTitle, formSource }) => {
       <div className="form-container flex items-center justify-center py-8" style={{ minHeight: 'calc(100vh - 160px)' }}>
         <div className="form-two-column">
           {/* Left column with name and explanation */}
-          <div className="left-column">
+          <div className={`left-column ${userPlan === 'free' ? 'full-width' : ''}`}>
             {/* Name section with icon and description */}
             <div className="name-section">
               <div className="name-section-content">
@@ -477,9 +478,10 @@ const PaginatedFormView = ({ fields = [], formTitle, formSource }) => {
             </div>
           </div>
           
-          {/* Video section with character and speech bubble */}
-          <div className="right-column">
-            <div className="video-section">
+          {/* Video section with character and speech bubble - Available for Basic and Pro users */}
+          {(userPlan === 'basic' || userPlan === 'pro') && (
+            <div className="right-column">
+              <div className="video-section">
               <div className="video-container">
                 <div className="video-content-wrapper">
                   {/* Character image and speech bubble */}
@@ -570,34 +572,35 @@ const PaginatedFormView = ({ fields = [], formTitle, formSource }) => {
               </div>
             </div>
           </div>
+          )}
         </div>
       </div>
       
       {/* Audio playing indicator */}
       {isAudioPlaying && (
-        <div className="audio-playing-indicator">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.465l-2.172-2.171a1 1 0 010-1.415l8.9-8.9a1 1 0 011.414 0l2.172 2.172m-1.415 1.414L5.586 15.465a1 1 0 001.415 0l7.07-7.07a1 1 0 000-1.415" />
+        <button
+          onClick={() => {
+            if (audioElement) {
+              audioElement.pause();
+              audioElement.currentTime = 0;
+              setIsAudioPlaying(false);
+            }
+          }}
+          className="audio-playing-indicator bg-gradient-to-r from-[#2196F3] to-[#1976D2] hover:from-[#1976D2] hover:to-[#1565C0] w-20 h-20 rounded-full flex items-center justify-center shadow-2xl border-4 border-white focus:outline-none focus:ring-4 focus:ring-blue-200 transition-all duration-300 fixed left-1/2 bottom-24 z-[9997] md:w-20 md:h-20 w-16 h-16"
+          style={{ transform: 'translateX(-50%)', aspectRatio: '1 / 1', borderRadius: '9999px' }}
+          title="Stop audio playback"
+          aria-label="Stop audio playback"
+        >
+          {/* Pause icon */}
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" className="w-8 h-8 md:w-10 md:h-10 text-white" stroke="currentColor" strokeWidth={2}>
+            <rect x="6" y="5" width="4" height="14" rx="2" fill="currentColor" />
+            <rect x="14" y="5" width="4" height="14" rx="2" fill="currentColor" />
           </svg>
-          Audio playing - please wait
-          <button 
-            onClick={() => {
-              if (audioElement) {
-                audioElement.pause();
-                audioElement.currentTime = 0;
-                setIsAudioPlaying(false);
-              }
-            }}
-            className="text-white hover:text-red-100 underline text-xs ml-2 font-medium"
-            title="Stop audio playback"
-          >
-            Stop
-          </button>
-        </div>
+        </button>
       )}
       
       {/* Bottom navigation fixed bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg py-4 px-6 z-10">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg py-4 px-6 z-[9998]">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <button
             onClick={handlePrev}

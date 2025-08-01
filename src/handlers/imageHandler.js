@@ -1,3 +1,6 @@
+import { doc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+
 /**
  * Handles image file uploads by converting them to base64 and sending to the analyze API
  * @param {File} file - The image file to handle
@@ -5,9 +8,12 @@
  * @param {Function} setUploadStatus - State setter for tracking processing status
  * @param {Function} [setOverlayMessage] - Optional state setter for detailed status messages
  * @param {Function} [setShowOverlay] - Optional state setter to control overlay visibility
+ * @param {Object} [userData] - User data containing plan information
+ * @param {string} [userId] - User ID for database updates
+ * @param {string} [selectedLanguage] - Selected language for Pro users
  * @returns {Promise<void>}
  */
-export const handleImageFile = async (file, setFileName, setUploadStatus, setOverlayMessage, setShowOverlay) => {
+export const handleImageFile = async (file, setFileName, setUploadStatus, setOverlayMessage, setShowOverlay, userData = null, userId = null, selectedLanguage = 'en') => {
   if (!file) return;
   
   // Set file name for display
@@ -48,7 +54,10 @@ export const handleImageFile = async (file, setFileName, setUploadStatus, setOve
       body: JSON.stringify({
         content: base64Image,
         fileType: 'image',
-        fileName: file.name
+        fileName: file.name,
+        userPlan: userData?.planType || 'free',
+        userId: userId,
+        selectedLanguage: selectedLanguage
       }),
     });
     
@@ -75,7 +84,22 @@ export const handleImageFile = async (file, setFileName, setUploadStatus, setOve
       updateStatus('processing', 'Processing results...');
     }
     
-    // Step 5: Storing data
+    // Step 5: Increment upload count for successful processing
+    if (userId) {
+      try {
+        updateStatus('processing', 'Updating your usage count...');
+        const userRef = doc(db, 'users', userId);
+        await updateDoc(userRef, {
+          uploadCount: increment(1)
+        });
+        console.log('Successfully incremented upload count for user:', userId);
+      } catch (countError) {
+        console.error('Error incrementing upload count:', countError);
+        // Don't fail the entire process if count update fails
+      }
+    }
+
+    // Step 6: Storing data
     updateStatus('processing', 'Preparing your results...');
     if (typeof window !== 'undefined') {
       localStorage.setItem('explanationData', JSON.stringify({
@@ -86,7 +110,7 @@ export const handleImageFile = async (file, setFileName, setUploadStatus, setOve
       }));
     }
     
-    // Step 6: Success and redirect
+    // Step 7: Success and redirect
     updateStatus('success', `Success! Found ${fieldsCount} form fields. Redirecting to explanation...`);
     
     // Keep overlay visible and show success status for 1.5 seconds before redirecting

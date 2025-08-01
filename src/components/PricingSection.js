@@ -92,14 +92,21 @@ export default function PricingSection() {
 							}`}>
 								{plan.title}
 							</h3>
-							<div className="text-center">
-								<img 
-									src={`/${plan.title.toLowerCase()}.png`} 
-									alt={`${plan.title} Plan - ${plan.price}`}
-									className="h-20 mx-auto select-none pointer-events-none image-protected"
-									style={{ objectFit: "contain", userSelect: "none" }}
-									draggable="false"
-								/>
+							<div className="text-center mb-2">
+								<div className={`text-5xl font-extrabold mb-1 ${
+									plan.badge === "BEST" ? "text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-500" : 
+									plan.badge === "POPULAR" ? "text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400" : 
+									"text-gray-700"
+								}`}>
+									{plan.title === "Free" ? "$0" : plan.title === "Basic" ? "$9" : "$29"}
+								</div>
+								<div className={`text-sm font-medium ${
+									plan.badge === "BEST" ? "text-purple-600" : 
+									plan.badge === "POPULAR" ? "text-blue-500" : 
+									"text-gray-500"
+								}`}>
+									{plan.title === "Free" ? "Forever" : "per month"}
+								</div>
 							</div>
 							<div className="w-full h-px bg-gray-100 mb-6"></div>
 							<ul className="mb-6 w-full">

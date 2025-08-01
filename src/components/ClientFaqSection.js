@@ -45,7 +45,7 @@ const faqItems = [
   }
 ];
 
-export default function FaqSection() {
+export default function ClientFaqSection() {
   const [openIndex, setOpenIndex] = useState(null);
 
   const toggleFaq = (index) => {

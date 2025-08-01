@@ -18,7 +18,7 @@ const openai = new OpenAI({
  */
 export async function POST(request) {
   try {
-    let content, fileType, fileName, metadata;
+    let content, fileType, fileName, metadata, userPlan, userId, selectedLanguage;
     
     // Check the content type to determine how to parse the request
     const contentType = request.headers.get('content-type') || '';
@@ -28,6 +28,9 @@ export async function POST(request) {
       const formData = await request.formData();
       const file = formData.get('file');
       fileType = formData.get('fileType');
+      userPlan = formData.get('userPlan') || 'free';
+      userId = formData.get('userId');
+      selectedLanguage = formData.get('selectedLanguage') || 'en';
       
       if (file) {
         // Get file content as text
@@ -41,6 +44,9 @@ export async function POST(request) {
       fileType = jsonData.fileType;
       fileName = jsonData.fileName;
       metadata = jsonData.metadata;
+      userPlan = jsonData.userPlan || 'free';
+      userId = jsonData.userId;
+      selectedLanguage = jsonData.selectedLanguage || 'en';
     }
 
     if (!content) {
@@ -157,21 +163,41 @@ The "fields" array must contain EVERY form field detected in the document, with 
     let analysis = initialAnalysis;
     if (initialAnalysis && initialAnalysis.fields && initialAnalysis.fields.length > 0) {
       try {
+        // Apply plan-based limitations
+        let fieldsToProcess = initialAnalysis.fields;
+        
+        // Plan-specific field limitations
+        if (userPlan === 'free') {
+          console.log(`Free plan detected. Limiting to 5 fields out of ${fieldsToProcess.length} detected fields.`);
+          fieldsToProcess = fieldsToProcess.slice(0, 5);
+        } else if (userPlan === 'basic') {
+          console.log(`Basic plan detected. Processing all ${fieldsToProcess.length} fields with English-only output.`);
+          // Basic plan gets all fields but English-only
+        } else if (userPlan === 'pro') {
+          console.log(`Pro plan detected. Processing all ${fieldsToProcess.length} fields with multi-language support.`);
+          // Pro plan gets all fields with multi-language support
+        }
+        
         // Step 1: Make a second API call to enhance the explanations
-        console.log('Detected', initialAnalysis.fields.length, 'fields, enhancing explanations...');
-        const enhancedFields = await enhanceFieldExplanations(initialAnalysis.fields);
+        console.log('Detected', initialAnalysis.fields.length, 'fields, enhancing explanations for', fieldsToProcess.length, 'fields...');
+        const enhancedFields = await enhanceFieldExplanations(fieldsToProcess, userPlan, selectedLanguage);
         
-        // Step 2: Generate TTS for the enhanced fields with character voice text
-        console.log('Generating TTS for enhanced fields...');
-        const fieldsWithTTS = await generateTTSForFields(enhancedFields);
+        // Step 2: Generate TTS for the enhanced fields (skip for free users only)
+        let finalFields = enhancedFields;
+        if (userPlan === 'free') {
+          console.log('Skipping TTS generation for free plan user');
+        } else {
+          console.log(`Generating TTS for enhanced fields (${userPlan} plan)...`);
+          finalFields = await generateTTSForFields(enhancedFields, selectedLanguage);
+        }
         
-        // Replace the fields with fully enhanced versions (explanations + TTS)
+        // Replace the fields with enhanced versions (explanations + TTS for paid plans)
         analysis = {
           ...initialAnalysis,
-          fields: fieldsWithTTS
+          fields: finalFields
         };
         
-        console.log('Successfully enhanced field explanations and generated TTS');
+        console.log(`Successfully enhanced field explanations${userPlan !== 'free' ? ' and generated TTS' : ''}`);
       } catch (enhanceError) {
         console.error('Error enhancing explanations, using original analysis:', enhanceError);
         // Continue with original analysis if enhancement fails
@@ -235,15 +261,37 @@ The "fields" array must contain EVERY form field detected in the document, with 
 /**
  * Makes a second API call to enhance the field explanations with better content
  * @param {Array} fields - The detected form fields from the first analysis
+ * @param {string} userPlan - The user's plan type (free, basic, pro)
+ * @param {string} selectedLanguage - The selected language for Pro users
  * @returns {Promise<Array>} Enhanced fields with better explanations
  */
-async function enhanceFieldExplanations(fields) {
+async function enhanceFieldExplanations(fields, userPlan = 'free', selectedLanguage = 'en') {
   if (!fields || !Array.isArray(fields) || fields.length === 0) {
     return fields;
   }
   
   console.log('Enhancing explanations for', fields.length, 'fields');
   
+  // Create system message with language requirements based on user plan
+  let languageRequirement = '';
+  if (userPlan === 'free' || userPlan === 'basic') {
+    languageRequirement = '\n\nIMPORTANT: You MUST respond ONLY in English. All explanations, examples, and voice text must be in English regardless of the original form language.';
+  } else if (userPlan === 'pro' && selectedLanguage !== 'en') {
+    // Get language name for Pro users with non-English selection
+    const languageNames = {
+      'zh': 'Chinese (Mandarin)', 'hi': 'Hindi', 'es': 'Spanish', 'ar': 'Arabic',
+      'fr': 'French', 'de': 'German', 'ja': 'Japanese', 'ko': 'Korean',
+      'ru': 'Russian', 'pt': 'Portuguese', 'it': 'Italian', 'nl': 'Dutch',
+      'tr': 'Turkish', 'pl': 'Polish', 'sv': 'Swedish', 'da': 'Danish',
+      'no': 'Norwegian', 'fi': 'Finnish', 'th': 'Thai', 'vi': 'Vietnamese',
+      'uk': 'Ukrainian', 'cs': 'Czech', 'hu': 'Hungarian', 'ro': 'Romanian',
+      'bg': 'Bulgarian', 'hr': 'Croatian', 'sk': 'Slovak', 'sl': 'Slovenian',
+      'et': 'Estonian', 'lv': 'Latvian', 'lt': 'Lithuanian', 'mt': 'Maltese'
+    };
+    const languageName = languageNames[selectedLanguage] || selectedLanguage;
+    languageRequirement = `\n\nIMPORTANT: You MUST respond ONLY in ${languageName}. All explanations, examples, and voice text must be in ${languageName}. The user has selected ${languageName} as their preferred language.`;
+  }
+
   const systemMessage = `You are FormBuddy, a friendly AI assistant who explains form fields in clear, simple, and engaging ways.
   
 Your task is to enhance the explanations for each form field provided. Your explanations should be conversational, friendly, and easy to understand - as if a helpful character is explaining them to the user.
@@ -270,7 +318,7 @@ CRITICAL REQUIREMENTS FOR THE characterVoiceText:
 - ALWAYS use direct second-person language ("you" and "your"), NEVER use third-person ("they" or "the user")
 - Start the text by directly addressing what the field is for or how to complete it
 - Keep the tone friendly and conversational but get straight to the point
-- Focus on being helpful and informative without unnecessary preambles`;
+- Focus on being helpful and informative without unnecessary preambles${languageRequirement}`;
 
   // Map all relevant field information to provide context for explanation generation
   const fieldsOverview = fields.map(field => ({
@@ -398,9 +446,10 @@ Make sure you have one object in the enhancements array for each field I've prov
 /**
  * Generates TTS (Text-to-Speech) audio for the character voice text
  * @param {Array} fields - The enhanced form fields with characterVoiceText
+ * @param {string} selectedLanguage - The selected language for TTS generation
  * @returns {Promise<Array>} Fields with added TTS audio data
  */
-async function generateTTSForFields(fields) {
+async function generateTTSForFields(fields, selectedLanguage = 'en') {
   if (!fields || !Array.isArray(fields) || fields.length === 0) {
     return fields;
   }
@@ -430,6 +479,8 @@ async function generateTTSForFields(fields) {
           console.log(`Field "${field.label}" has no characterVoiceText to convert to speech`);
           return field;
         }
+        
+        console.log(`Generating TTS for field "${field.label}" in language: ${selectedLanguage}`);
         
         // Use the same OpenAI TTS settings as in the tts/route.js file
         const ttsResponse = await openai.audio.speech.create({
