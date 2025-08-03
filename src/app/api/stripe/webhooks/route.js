@@ -104,14 +104,30 @@ export async function POST(request) {
         // If we don't have userId but have email and planType, try to find user by email
         if (!userId && planType && session.customer_details?.email) {
           try {
-            const usersQuery = query(collection(db, 'users'), where('email', '==', session.customer_details.email));
-            const querySnapshot = await getDocs(usersQuery);
+            console.log('Searching for user with email:', session.customer_details.email);
             
-            if (!querySnapshot.empty) {
-              userId = querySnapshot.docs[0].id;
-              console.log('Found user by email:', userId);
-            } else {
-              console.warn('User not found by email:', session.customer_details.email);
+            // Try different possible email fields in Firestore
+            const emailQueries = [
+              query(collection(db, 'users'), where('email', '==', session.customer_details.email)),
+              query(collection(db, 'users'), where('userEmail', '==', session.customer_details.email)),
+              query(collection(db, 'users'), where('emailAddress', '==', session.customer_details.email))
+            ];
+            
+            for (const emailQuery of emailQueries) {
+              try {
+                const querySnapshot = await getDocs(emailQuery);
+                if (!querySnapshot.empty) {
+                  userId = querySnapshot.docs[0].id;
+                  console.log('✅ Found user by email:', userId, 'with document:', querySnapshot.docs[0].data());
+                  break;
+                }
+              } catch (queryError) {
+                console.log('Query failed:', queryError.message);
+              }
+            }
+            
+            if (!userId) {
+              console.warn('❌ User not found by email after trying all fields:', session.customer_details.email);
             }
           } catch (error) {
             console.error('Error finding user by email:', error);
@@ -143,6 +159,18 @@ export async function POST(request) {
         } else {
           console.error('❌ Missing userId or planType in session metadata:', { userId, planType });
         }
+        break;
+      }
+
+      case 'customer.subscription.created': {
+        const subscription = event.data.object;
+        const customerId = subscription.customer;
+        
+        console.log(`🆕 Subscription created - Customer: ${customerId}, Status: ${subscription.status}`);
+        
+        // For subscription creation, we typically don't need to do anything special
+        // The plan update happens in checkout.session.completed
+        // But we can log it for tracking
         break;
       }
 
@@ -208,13 +236,41 @@ export async function POST(request) {
         const customerId = invoice.customer;
 
         try {
-          // Find user by Stripe customer ID and log transaction
-          const usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
-          const querySnapshot = await getDocs(usersQuery);
+          // First try to find user by Stripe customer ID
+          let userDoc = null;
+          let usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+          let querySnapshot = await getDocs(usersQuery);
 
           if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
+            userDoc = querySnapshot.docs[0];
+          } else {
+            // If not found by customer ID, try to find by email from the invoice
+            const customerEmail = invoice.customer_email;
+            if (customerEmail) {
+              console.log('Trying to find user by email for transaction:', customerEmail);
+              
+              const emailQueries = [
+                query(collection(db, 'users'), where('email', '==', customerEmail)),
+                query(collection(db, 'users'), where('userEmail', '==', customerEmail)),
+                query(collection(db, 'users'), where('emailAddress', '==', customerEmail))
+              ];
+              
+              for (const emailQuery of emailQueries) {
+                try {
+                  const emailQuerySnapshot = await getDocs(emailQuery);
+                  if (!emailQuerySnapshot.empty) {
+                    userDoc = emailQuerySnapshot.docs[0];
+                    console.log('✅ Found user by email for transaction:', userDoc.id);
+                    break;
+                  }
+                } catch (queryError) {
+                  console.log('Email query failed:', queryError.message);
+                }
+              }
+            }
+          }
 
+          if (userDoc) {
             // Store transaction record
             await addDoc(collection(db, 'transactions'), {
               userId: userDoc.id,

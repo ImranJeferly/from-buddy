@@ -23,7 +23,7 @@ service cloud.firestore {
                          .hasOnly(['planType', 'planStatus', 'planStartDate', 'planExpiryDate', 
                                   'stripeCustomerId', 'stripeSubscriptionId', 'lastUpdated', 'lastPlanUpdate']) &&
                        // Ensure planType is valid
-                       (request.resource.data.planType in ['free', 'basic', 'premium']) &&
+                       (request.resource.data.planType in ['free', 'basic', 'pro']) &&
                        // Ensure planStatus is valid  
                        (request.resource.data.planStatus in ['active', 'cancelled', 'incomplete', 'past_due']);
       
