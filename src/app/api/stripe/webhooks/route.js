@@ -87,7 +87,14 @@ export async function POST(request) {
         } else {
           // Fallback: determine from amount
           const amount = session.amount_total;
-          planType = amount === 900 ? 'basic' : 'pro';
+          if (amount === 900) {
+            planType = 'basic';
+          } else if (amount === 1499) {
+            planType = 'pro';
+          } else {
+            // Default logic for any other amounts
+            planType = amount < 1200 ? 'basic' : 'pro';
+          }
         }
         
         console.log('Payment link detection - UserId:', userId, 'PlanType:', planType);

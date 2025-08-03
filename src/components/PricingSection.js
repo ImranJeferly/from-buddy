@@ -35,7 +35,8 @@ const plans = [
 	},
 	{
 		title: "Pro",
-		price: "$29/month", // Keep for alt text
+		price: "$14.99/month", // Keep for alt text
+		originalPrice: "$29/month",
 		features: [
 			"Unlimited form uploads",
 			"Explains all fields",
@@ -138,14 +139,32 @@ export default function PricingSection() {
 							}`}>
 								{plan.title}
 							</h3>
-							<div className="text-center mb-2">
-								<div className={`text-5xl font-extrabold mb-1 ${
+							<div className="text-center mb-2 relative">
+								<div className={`text-5xl font-extrabold mb-1 relative ${
 									plan.badge === "BEST" ? "text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-500" : 
 									plan.badge === "POPULAR" ? "text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400" : 
 									"text-gray-700"
 								}`}>
-									{plan.title === "Free" ? "$0" : plan.title === "Basic" ? "$9" : "$29"}
+									{plan.title === "Free" ? "$0" : plan.title === "Basic" ? "$9" : "$14.99"}
+									
+									{plan.title === "Pro" && plan.originalPrice && (
+										<div className="absolute -top-3 -right-8 transform rotate-12">
+											<div className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border-2 border-white">
+												<div className="text-center">
+													<div className="text-[10px] leading-none">SAVE</div>
+													<div className="text-sm leading-none">$14</div>
+												</div>
+											</div>
+										</div>
+									)}
 								</div>
+								
+								{plan.title === "Pro" && plan.originalPrice && (
+									<div className="text-sm text-gray-400 line-through mb-1">
+										was $29/month
+									</div>
+								)}
+								
 								<div className={`text-sm font-medium ${
 									plan.badge === "BEST" ? "text-purple-600" : 
 									plan.badge === "POPULAR" ? "text-blue-500" : 
