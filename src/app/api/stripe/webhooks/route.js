@@ -66,7 +66,24 @@ export async function POST(request) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const { userId, planType } = session.metadata || {};
+        
+        // Log the full session object for debugging
+        console.log('Full session object:', JSON.stringify(session, null, 2));
+        console.log('Session client_reference_id:', session.client_reference_id);
+        console.log('Session metadata:', session.metadata);
+        
+        // Extract user info from client_reference_id (format: "userId|planType")
+        let userId, planType;
+        
+        if (session.client_reference_id && session.client_reference_id.includes('|')) {
+          [userId, planType] = session.client_reference_id.split('|');
+        } else if (session.metadata) {
+          // Fallback to metadata if available
+          userId = session.metadata.userId;
+          planType = session.metadata.planType;
+        }
+        
+        console.log('Extracted user info:', { userId, planType });
 
         if (userId && planType) {
           try {
@@ -98,7 +115,26 @@ export async function POST(request) {
         const subscription = event.data.object;
         const customerId = subscription.customer;
 
-        console.log(`📝 Subscription updated - Customer: ${customerId}, Status: ${subscription.status}`);
+        try {
+          // Find user by Stripe customer ID and update subscription status
+          const usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+          const querySnapshot = await getDocs(usersQuery);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+
+            await updateDoc(userDoc.ref, {
+              planStatus: subscription.status,
+              lastUpdated: serverTimestamp(),
+            });
+
+            console.log(`📝 Subscription updated for customer ${customerId}, status: ${subscription.status}`);
+          } else {
+            console.warn(`⚠️ User not found for Stripe customer: ${customerId}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to update subscription for customer ${customerId}:`, error);
+        }
         break;
       }
 
@@ -106,7 +142,29 @@ export async function POST(request) {
         const subscription = event.data.object;
         const customerId = subscription.customer;
 
-        console.log(`🚫 Subscription cancelled - Customer: ${customerId}`);
+        try {
+          // Find user by Stripe customer ID and revert to free plan
+          const usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+          const querySnapshot = await getDocs(usersQuery);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+
+            await updateDoc(userDoc.ref, {
+              planType: 'free',
+              planStatus: 'cancelled',
+              planExpiryDate: serverTimestamp(),
+              lastUpdated: serverTimestamp(),
+              lastPlanUpdate: serverTimestamp(),
+            });
+
+            console.log(`🚫 Subscription cancelled for customer ${customerId}, reverted to free plan`);
+          } else {
+            console.warn(`⚠️ User not found for Stripe customer: ${customerId}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to cancel subscription for customer ${customerId}:`, error);
+        }
         break;
       }
 
@@ -114,7 +172,33 @@ export async function POST(request) {
         const invoice = event.data.object;
         const customerId = invoice.customer;
 
-        console.log(`💰 Payment succeeded - Customer: ${customerId}, Amount: ${invoice.amount_paid / 100} ${invoice.currency}`);
+        try {
+          // Find user by Stripe customer ID and log transaction
+          const usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+          const querySnapshot = await getDocs(usersQuery);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+
+            // Store transaction record
+            await addDoc(collection(db, 'transactions'), {
+              userId: userDoc.id,
+              stripeInvoiceId: invoice.id,
+              amount: invoice.amount_paid / 100, // Convert from cents
+              currency: invoice.currency,
+              status: 'succeeded',
+              description: invoice.lines.data[0]?.description || 'Subscription payment',
+              createdAt: new Date(invoice.created * 1000),
+              paidAt: serverTimestamp(),
+            });
+
+            console.log(`💰 Payment recorded for customer ${customerId}: ${invoice.amount_paid / 100} ${invoice.currency}`);
+          } else {
+            console.warn(`⚠️ User not found for payment record, customer: ${customerId}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to record payment for customer ${customerId}:`, error);
+        }
         break;
       }
 
@@ -122,7 +206,33 @@ export async function POST(request) {
         const invoice = event.data.object;
         const customerId = invoice.customer;
 
-        console.log(`❌ Payment failed - Customer: ${customerId}, Amount: ${invoice.amount_due / 100} ${invoice.currency}`);
+        try {
+          // Find user by Stripe customer ID and log failed transaction
+          const usersQuery = query(collection(db, 'users'), where('stripeCustomerId', '==', customerId));
+          const querySnapshot = await getDocs(usersQuery);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+
+            // Store failed transaction record
+            await addDoc(collection(db, 'transactions'), {
+              userId: userDoc.id,
+              stripeInvoiceId: invoice.id,
+              amount: invoice.amount_due / 100, // Convert from cents
+              currency: invoice.currency,
+              status: 'failed',
+              description: invoice.lines.data[0]?.description || 'Subscription payment',
+              createdAt: new Date(invoice.created * 1000),
+              failedAt: serverTimestamp(),
+            });
+
+            console.log(`❌ Payment failed for customer ${customerId}: ${invoice.amount_due / 100} ${invoice.currency}`);
+          } else {
+            console.warn(`⚠️ User not found for failed payment record, customer: ${customerId}`);
+          }
+        } catch (error) {
+          console.error(`❌ Failed to record payment failure for customer ${customerId}:`, error);
+        }
         break;
       }
 

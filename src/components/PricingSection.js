@@ -75,7 +75,9 @@ export default function PricingSection() {
 		}
 
 		// Redirect directly to Stripe payment link with user info
-		const paymentUrl = `${STRIPE_PAYMENT_LINKS[planType]}?client_reference_id=${currentUser.uid}&prefilled_email=${encodeURIComponent(currentUser.email)}`;
+		// Include both user ID and plan type in client_reference_id
+		const clientRefId = `${currentUser.uid}|${planType}`;
+		const paymentUrl = `${STRIPE_PAYMENT_LINKS[planType]}?client_reference_id=${encodeURIComponent(clientRefId)}&prefilled_email=${encodeURIComponent(currentUser.email)}`;
 		window.location.href = paymentUrl;
 	};
 

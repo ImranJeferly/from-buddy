@@ -9,8 +9,12 @@ export async function POST(request) {
   try {
     const { priceId, planType, userId } = await request.json();
 
+    // Log received data for debugging
+    console.log('Create checkout request:', { priceId, planType, userId });
+
     // Validate required fields
     if (!priceId || !planType || !userId) {
+      console.error('Missing required fields:', { priceId, planType, userId });
       return NextResponse.json(
         { error: 'Missing required fields: priceId, planType, or userId' },
         { status: 400 }
@@ -35,6 +39,13 @@ export async function POST(request) {
       },
       // This ensures the customer info is passed to the webhook
       customer_creation: 'always',
+    });
+
+    // Log the created session for debugging
+    console.log('Created Stripe session:', {
+      id: session.id,
+      metadata: session.metadata,
+      customer_creation: session.customer_creation
     });
 
     return NextResponse.json({
