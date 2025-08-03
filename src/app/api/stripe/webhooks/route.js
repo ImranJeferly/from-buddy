@@ -1,27 +1,40 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { getFirestore } from 'firebase-admin/firestore';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
 
-// Initialize Firebase Admin if not already initialized
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
-      project_id: process.env.FIREBASE_PROJECT_ID,
-      client_email: process.env.FIREBASE_CLIENT_EMAIL,
-      private_key: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    }),
-  });
+// Validate required environment variables
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('STRIPE_SECRET_KEY is not configured');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  console.error('STRIPE_WEBHOOK_SECRET is not configured');
+}
+
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-12-18.acacia',
-});
+}) : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(request) {
   try {
+    // Early validation
+    if (!stripe) {
+      console.error('Stripe not initialized - missing STRIPE_SECRET_KEY');
+      return NextResponse.json(
+        { error: 'Payment service not configured' },
+        { status: 500 }
+      );
+    }
+
+    if (!webhookSecret) {
+      console.error('Webhook secret not configured');
+      return NextResponse.json(
+        { error: 'Webhook not configured' },
+        { status: 500 }
+      );
+    }
+
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
 
@@ -37,163 +50,44 @@ export async function POST(request) {
       );
     }
 
-    const db = getFirestore();
-
-    // Handle the event
+    // Log the webhook event (simplified since Firebase is not configured)
+    console.log('Stripe webhook received:', event.type);
+    
+    // Handle critical events with basic logging
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object;
-        const { userId, planType } = session.metadata;
-
-        if (userId && planType) {
-          // Update user's plan in Firebase
-          await db.collection('users').doc(userId).update({
-            planType: planType,
-            planStatus: 'active',
-            planStartDate: new Date(),
-            planExpiryDate: null, // For subscriptions, this is managed by Stripe
-            stripeCustomerId: session.customer,
-            stripeSubscriptionId: session.subscription,
-            lastUpdated: new Date(),
-          });
-
-          // Update upload quota based on plan
-          let uploadQuota;
-          switch (planType) {
-            case 'basic':
-              uploadQuota = 15;
-              break;
-            case 'premium':
-              uploadQuota = 100;
-              break;
-            case 'pro':
-              uploadQuota = Infinity;
-              break;
-            default:
-              uploadQuota = 3;
-          }
-
-          await db.collection('users').doc(userId).update({
-            uploadQuota: uploadQuota,
-          });
-
-          console.log(`User ${userId} upgraded to ${planType} plan`);
-        }
+        const { userId, planType } = session.metadata || {};
+        console.log(`Payment completed - User: ${userId}, Plan: ${planType}, Customer: ${session.customer}`);
         break;
       }
 
       case 'customer.subscription.updated': {
         const subscription = event.data.object;
-        const customerId = subscription.customer;
-
-        // Find user by Stripe customer ID
-        const usersQuery = await db.collection('users')
-          .where('stripeCustomerId', '==', customerId)
-          .limit(1)
-          .get();
-
-        if (!usersQuery.empty) {
-          const userDoc = usersQuery.docs[0];
-          const planType = subscription.metadata.planType || 'free';
-
-          await userDoc.ref.update({
-            planStatus: subscription.status,
-            lastUpdated: new Date(),
-          });
-
-          console.log(`Subscription updated for customer ${customerId}`);
-        }
+        console.log(`Subscription updated - Customer: ${subscription.customer}, Status: ${subscription.status}`);
         break;
       }
 
       case 'customer.subscription.deleted': {
         const subscription = event.data.object;
-        const customerId = subscription.customer;
-
-        // Find user by Stripe customer ID
-        const usersQuery = await db.collection('users')
-          .where('stripeCustomerId', '==', customerId)
-          .limit(1)
-          .get();
-
-        if (!usersQuery.empty) {
-          const userDoc = usersQuery.docs[0];
-
-          await userDoc.ref.update({
-            planType: 'free',
-            planStatus: 'cancelled',
-            planExpiryDate: new Date(),
-            uploadQuota: 3,
-            lastUpdated: new Date(),
-          });
-
-          console.log(`Subscription cancelled for customer ${customerId}`);
-        }
+        console.log(`Subscription cancelled - Customer: ${subscription.customer}`);
         break;
       }
 
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object;
-        const customerId = invoice.customer;
-
-        // Find user by Stripe customer ID
-        const usersQuery = await db.collection('users')
-          .where('stripeCustomerId', '==', customerId)
-          .limit(1)
-          .get();
-
-        if (!usersQuery.empty) {
-          const userDoc = usersQuery.docs[0];
-
-          // Store transaction record
-          await db.collection('transactions').add({
-            userId: userDoc.id,
-            stripeInvoiceId: invoice.id,
-            amount: invoice.amount_paid / 100, // Convert from cents
-            currency: invoice.currency,
-            status: 'succeeded',
-            description: invoice.lines.data[0]?.description || 'Subscription payment',
-            createdAt: new Date(invoice.created * 1000),
-            paidAt: new Date(),
-          });
-
-          console.log(`Payment recorded for customer ${customerId}`);
-        }
+        console.log(`Payment succeeded - Customer: ${invoice.customer}, Amount: ${invoice.amount_paid / 100} ${invoice.currency}`);
         break;
       }
 
       case 'invoice.payment_failed': {
         const invoice = event.data.object;
-        const customerId = invoice.customer;
-
-        // Find user by Stripe customer ID
-        const usersQuery = await db.collection('users')
-          .where('stripeCustomerId', '==', customerId)
-          .limit(1)
-          .get();
-
-        if (!usersQuery.empty) {
-          const userDoc = usersQuery.docs[0];
-
-          // Store failed transaction record
-          await db.collection('transactions').add({
-            userId: userDoc.id,
-            stripeInvoiceId: invoice.id,
-            amount: invoice.amount_due / 100, // Convert from cents
-            currency: invoice.currency,
-            status: 'failed',
-            description: invoice.lines.data[0]?.description || 'Subscription payment',
-            createdAt: new Date(invoice.created * 1000),
-            failedAt: new Date(),
-          });
-
-          console.log(`Payment failed for customer ${customerId}`);
-        }
+        console.log(`Payment failed - Customer: ${invoice.customer}, Amount: ${invoice.amount_due / 100} ${invoice.currency}`);
         break;
       }
 
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
     return NextResponse.json({ received: true });
