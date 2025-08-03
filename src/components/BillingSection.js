@@ -125,10 +125,15 @@ export default function BillingSection() {
             <p className="text-blue-700">
               Status: <span className="font-medium capitalize">{userData?.planStatus || 'Active'}</span>
             </p>
-            {userData?.planType !== 'free' && userData?.planStartDate && (
-              <p className="text-blue-600 text-sm mt-1">
-                Started: {formatDate(userData.planStartDate.toDate())}
-              </p>
+            {userData?.planType !== 'free' && (
+              <div className="text-blue-600 text-sm mt-1 space-y-1">
+                {userData?.planStartDate && (
+                  <p>Started: {formatDate(userData.planStartDate.toDate())}</p>
+                )}
+                {userData?.planRenewalDate && (
+                  <p>Next renewal: {formatDate(userData.planRenewalDate.toDate ? userData.planRenewalDate.toDate() : new Date(userData.planRenewalDate))}</p>
+                )}
+              </div>
             )}
           </div>
           <div className="text-right">

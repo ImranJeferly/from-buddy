@@ -20,7 +20,7 @@ service cloud.firestore {
       allow update: if request.auth == null &&
                        // Only allow updates to payment/plan related fields
                        request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['planType', 'planStatus', 'planStartDate', 'planExpiryDate', 
+                         .hasOnly(['planType', 'planStatus', 'planStartDate', 'planRenewalDate', 'planExpiryDate', 
                                   'stripeCustomerId', 'stripeSubscriptionId', 'lastUpdated', 'lastPlanUpdate']) &&
                        // Ensure planType is valid
                        (request.resource.data.planType in ['free', 'basic', 'pro']) &&

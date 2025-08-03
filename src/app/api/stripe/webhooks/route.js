@@ -141,10 +141,16 @@ export async function POST(request) {
             // Update user's plan in Firebase using client SDK
             // This works because we updated Firestore rules to allow webhook updates
             const userRef = doc(db, 'users', userId);
+            
+            // Calculate renewal date (30 days from now for monthly subscriptions)
+            const renewalDate = new Date();
+            renewalDate.setDate(renewalDate.getDate() + 30);
+            
             await updateDoc(userRef, {
               planType: planType,
               planStatus: 'active',
               planStartDate: serverTimestamp(),
+              planRenewalDate: renewalDate,
               planExpiryDate: null, // For subscriptions, this is managed by Stripe
               stripeCustomerId: session.customer,
               stripeSubscriptionId: session.subscription,
@@ -152,12 +158,32 @@ export async function POST(request) {
               lastPlanUpdate: serverTimestamp(),
             });
 
-            console.log(`✅ User ${userId} successfully upgraded to ${planType} plan`);
+            console.log(`✅ User ${userId} successfully upgraded to ${planType} plan with renewal date ${renewalDate.toISOString()}`);
           } catch (error) {
             console.error(`❌ Failed to update user ${userId} plan:`, error);
+            console.error('Error details:', error);
           }
-        } else {
-          console.error('❌ Missing userId or planType in session metadata:', { userId, planType });
+        } else if (!planType) {
+          console.error('❌ Missing planType - could not determine plan from amount:', session.amount_total);
+        } else if (!userId) {
+          console.error('❌ Missing userId - could not find user by email:', session.customer_details?.email);
+          
+          // Additional debugging: let's see what users exist
+          try {
+            const allUsersQuery = query(collection(db, 'users'));
+            const allUsersSnapshot = await getDocs(allUsersQuery);
+            console.log('📊 Available users in database:');
+            allUsersSnapshot.docs.forEach(doc => {
+              const userData = doc.data();
+              console.log(`- User ID: ${doc.id}, Email fields:`, {
+                email: userData.email,
+                userEmail: userData.userEmail,
+                emailAddress: userData.emailAddress
+              });
+            });
+          } catch (debugError) {
+            console.error('Debug query failed:', debugError);
+          }
         }
         break;
       }
@@ -186,10 +212,22 @@ export async function POST(request) {
           if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
 
-            await updateDoc(userDoc.ref, {
+            // Calculate next renewal date from subscription current period end
+            let renewalDate = null;
+            if (subscription.current_period_end) {
+              renewalDate = new Date(subscription.current_period_end * 1000);
+            }
+
+            const updateData = {
               planStatus: subscription.status,
               lastUpdated: serverTimestamp(),
-            });
+            };
+
+            if (renewalDate) {
+              updateData.planRenewalDate = renewalDate;
+            }
+
+            await updateDoc(userDoc.ref, updateData);
 
             console.log(`📝 Subscription updated for customer ${customerId}, status: ${subscription.status}`);
           } else {
