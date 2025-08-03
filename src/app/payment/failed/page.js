@@ -7,7 +7,6 @@ import Footer from "@/components/Footer";
 
 export default function PaymentFailedPage() {
   const router = useRouter();
-
   return (
     <>
       <Navbar />
