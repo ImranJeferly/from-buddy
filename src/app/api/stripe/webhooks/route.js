@@ -81,9 +81,44 @@ export async function POST(request) {
           // Fallback to metadata if available
           userId = session.metadata.userId;
           planType = session.metadata.planType;
+        } else {
+          // Last resort: try to find user by email and guess plan from amount
+          const customerEmail = session.customer_details?.email;
+          if (customerEmail) {
+            console.log('Trying to find user by email:', customerEmail);
+            
+            // Determine plan type from amount (in cents)
+            const amount = session.amount_total;
+            if (amount === 900) { // $9.00
+              planType = 'basic';
+            } else if (amount === 2900) { // $29.00
+              planType = 'pro';
+            }
+            
+            // We'll need to query Firebase to find the user by email
+            // For now, log this case and we'll handle it
+            console.log('Need to find user by email:', customerEmail, 'Amount:', amount, 'Guessed plan:', planType);
+          }
         }
         
-        console.log('Extracted user info:', { userId, planType });
+        // If we don't have userId but have email and planType, try to find user by email
+        if (!userId && planType && session.customer_details?.email) {
+          try {
+            const usersQuery = query(collection(db, 'users'), where('email', '==', session.customer_details.email));
+            const querySnapshot = await getDocs(usersQuery);
+            
+            if (!querySnapshot.empty) {
+              userId = querySnapshot.docs[0].id;
+              console.log('Found user by email:', userId);
+            } else {
+              console.warn('User not found by email:', session.customer_details.email);
+            }
+          } catch (error) {
+            console.error('Error finding user by email:', error);
+          }
+        }
+
+        console.log('Final user info:', { userId, planType });
 
         if (userId && planType) {
           try {

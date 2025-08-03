@@ -11,6 +11,10 @@ service cloud.firestore {
       allow read: if request.auth != null && 
                      resource.data.registrationIP != null;
       
+      // WEBHOOK SUPPORT: Allow server-side reads to find users by email
+      // This allows webhooks to find users by email for payment processing
+      allow read: if request.auth == null;
+      
       // WEBHOOK SUPPORT: Allow server-side updates for payment-related fields
       // This allows Stripe webhooks to update user plans without authentication
       allow update: if request.auth == null &&
