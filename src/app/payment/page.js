@@ -86,26 +86,13 @@ export default function PaymentPage() {
     setIsProcessing(true);
 
     try {
-      // Record the payment attempt in Firebase
-      await fetch('/api/payment/initiate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: currentUser.uid,
-          planType: selectedPlan,
-          userEmail: currentUser.email
-        }),
-      });
-
-      // Redirect to external payment provider
+      // Redirect directly to external payment provider
       const paymentUrl = `${PAYMENT_LINKS[selectedPlan]}?user_id=${currentUser.uid}&email=${currentUser.email}&plan=${selectedPlan}`;
       window.location.href = paymentUrl;
 
     } catch (error) {
-      console.error('Payment initiation error:', error);
-      alert('Failed to initiate payment. Please try again.');
+      console.error('Payment error:', error);
+      alert('Failed to redirect to payment. Please try again.');
       setIsProcessing(false);
     }
   };
