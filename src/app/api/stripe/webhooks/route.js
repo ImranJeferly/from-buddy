@@ -85,20 +85,19 @@ export async function POST(request) {
           // Last resort: try to find user by email and guess plan from amount
           const customerEmail = session.customer_details?.email;
           
-          // Determine plan type from amount (in cents) - do this regardless of email
+          // Simple plan detection from amount
           const amount = session.amount_total;
-          console.log('Detected amount for plan determination:', amount);
-          if (amount === 900 || amount === 850 || amount === 950) { // €9.00 (allowing for currency variations)
+          console.log('Amount detected:', amount);
+          
+          if (amount === 900) {
             planType = 'basic';
-          } else if (amount === 2900 || amount === 2850 || amount === 2950) { // €29.00 (allowing for currency variations)
-            planType = 'pro';
+          } else if (amount === 2900) {
+            planType = 'pro';  
           } else {
-            // Try to determine from payment link source
-            const paymentLink = session.payment_link;
-            console.log('Payment link for plan detection:', paymentLink);
-            if (paymentLink && paymentLink.includes('7sY8wRajdeImbdk0vW0x201')) {
+            // Default based on amount range
+            if (amount < 1500) {
               planType = 'basic';
-            } else if (paymentLink && paymentLink.includes('dRm14pbnhcAe2GOfqQ0x200')) {
+            } else {
               planType = 'pro';
             }
           }
