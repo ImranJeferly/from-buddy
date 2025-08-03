@@ -72,43 +72,25 @@ export async function POST(request) {
         console.log('Session client_reference_id:', session.client_reference_id);
         console.log('Session metadata:', session.metadata);
         
-        // Extract user info from client_reference_id (format: "userId|planType")
-        let userId, planType;
+        // Get userId from client_reference_id (now just the userId)
+        let userId = session.client_reference_id;
+        let planType;
         
-        if (session.client_reference_id && session.client_reference_id.includes('|')) {
-          [userId, planType] = session.client_reference_id.split('|');
-        } else if (session.metadata) {
-          // Fallback to metadata if available
-          userId = session.metadata.userId;
-          planType = session.metadata.planType;
+        // Determine planType from payment link - simple and reliable
+        const paymentLink = session.payment_link;
+        console.log('Payment link:', paymentLink);
+        
+        if (paymentLink && paymentLink.includes('7sY8wRajdeImbdk0vW0x201')) {
+          planType = 'basic';
+        } else if (paymentLink && paymentLink.includes('dRm14pbnhcAe2GOfqQ0x200')) {
+          planType = 'pro';
         } else {
-          // Last resort: try to find user by email and guess plan from amount
-          const customerEmail = session.customer_details?.email;
-          
-          // Simple plan detection from amount
+          // Fallback: determine from amount
           const amount = session.amount_total;
-          console.log('Amount detected:', amount);
-          
-          if (amount === 900) {
-            planType = 'basic';
-          } else if (amount === 2900) {
-            planType = 'pro';  
-          } else {
-            // Default based on amount range
-            if (amount < 1500) {
-              planType = 'basic';
-            } else {
-              planType = 'pro';
-            }
-          }
-          
-          console.log('Determined planType:', planType, 'from amount:', amount);
-          
-          if (customerEmail) {
-            console.log('Trying to find user by email:', customerEmail);
-            console.log('Need to find user by email:', customerEmail, 'Amount:', amount, 'Determined plan:', planType);
-          }
+          planType = amount === 900 ? 'basic' : 'pro';
         }
+        
+        console.log('Payment link detection - UserId:', userId, 'PlanType:', planType);
         
         // If we don't have userId but have email and planType, try to find user by email
         if (!userId && planType && session.customer_details?.email) {
