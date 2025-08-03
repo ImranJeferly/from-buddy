@@ -7,8 +7,8 @@ import { useAuth } from "@/lib/AuthContext";
 
 // Stripe payment links - replace with your actual Stripe payment links
 const STRIPE_PAYMENT_LINKS = {
-  basic: "https://buy.stripe.com/test_7sY8wRajdeImbdk0vW0x201",
-  pro: "https://buy.stripe.com/test_dRm14pbnhcAe2GOfqQ0x200"
+  basic: "https://buy.stripe.com/dRmfZhaPf4j67Tpg8AafS03",
+  pro: "https://buy.stripe.com/aFa3cv8H74j64HdcWoafS05"
 };
 
 const plans = [

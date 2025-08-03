@@ -8,8 +8,8 @@ import Footer from "@/components/Footer";
 
 // Payment links - replace these with your actual payment links
 const PAYMENT_LINKS = {
-  basic: "https://buy.stripe.com/test_7sY8wRajdeImbdk0vW0x201", // Replace with your Basic plan payment link  
-  pro: "https://buy.stripe.com/test_dRm14pbnhcAe2GOfqQ0x200" // Replace with your Pro plan payment link
+  basic: "https://buy.stripe.com/dRmfZhaPf4j67Tpg8AafS03", // Basic plan payment link  
+  pro: "https://buy.stripe.com/aFa3cv8H74j64HdcWoafS05" // Pro plan payment link
 };
 
 const plans = {

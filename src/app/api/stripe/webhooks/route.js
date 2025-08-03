@@ -80,9 +80,9 @@ export async function POST(request) {
         const paymentLink = session.payment_link;
         console.log('Payment link:', paymentLink);
         
-        if (paymentLink && paymentLink.includes('7sY8wRajdeImbdk0vW0x201')) {
+        if (paymentLink && paymentLink.includes('dRmfZhaPf4j67Tpg8AafS03')) {
           planType = 'basic';
-        } else if (paymentLink && paymentLink.includes('dRm14pbnhcAe2GOfqQ0x200')) {
+        } else if (paymentLink && paymentLink.includes('aFa3cv8H74j64HdcWoafS05')) {
           planType = 'pro';
         } else {
           // Fallback: determine from amount

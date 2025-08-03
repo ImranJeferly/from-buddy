@@ -4,8 +4,8 @@
 
 Your pricing section now redirects directly to Stripe payment links without intermediate pages:
 
-- **Basic Plan**: `https://buy.stripe.com/test_7sY8wRajdeImbdk0vW0x201`  
-- **Pro Plan**: `https://buy.stripe.com/test_dRm14pbnhcAe2GOfqQ0x200`
+- **Basic Plan**: `https://buy.stripe.com/dRmfZhaPf4j67Tpg8AafS03`  
+- **Pro Plan**: `https://buy.stripe.com/aFa3cv8H74j64HdcWoafS05`
 
 ## 🔧 Required Stripe Configuration
 
@@ -42,7 +42,7 @@ customer.subscription.deleted
 
 The system automatically appends user data to Stripe links:
 ```
-https://buy.stripe.com/test_xxx?client_reference_id=firebase_uid&customer_email=user@email.com
+https://buy.stripe.com/xxx?client_reference_id=firebase_uid&customer_email=user@email.com
 ```
 
 This allows Stripe to:
