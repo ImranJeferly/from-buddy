@@ -47,7 +47,7 @@ const plans = [
 ];
 
 export default function PricingSection() {
-	const { currentUser } = useAuth();
+	const { currentUser, userData } = useAuth();
 
 	const handlePlanSelect = async (planType) => {
 		// Check if user is logged in
@@ -191,41 +191,104 @@ export default function PricingSection() {
 								))}
 							</ul>
 							<div className="mt-auto w-full">
-								{idx === 0 ? (
-									<WhiteButton
-										disabled
-										style={{
-											opacity: "0.6",
-											cursor: "not-allowed",
-										}}
-									>
-										Current Plan
-									</WhiteButton>
-								) : idx === 2 ? (
-									<div className="transition-transform hover:scale-105">
-										<BrandButton 
-											onClick={() => handlePlanSelect('pro')}
-											style={{
-												background: "linear-gradient(90deg, #0D47A1 0%, #7E57C2 100%)",
-												boxShadow: "0 8px 20px -4px rgba(59, 130, 246, 0.5)"
-											}}
-										>
-											Choose Pro
-										</BrandButton>
-									</div>
-								) : (
-									<div className="transition-transform hover:scale-105">
-										<BrandButton 
-											onClick={() => handlePlanSelect('basic')}
-											style={{
-												background: "linear-gradient(90deg, #2196F3 0%, #00BCD4 100%)",
-												boxShadow: "0 8px 15px -4px rgba(59, 130, 246, 0.4)"
-											}}
-										>
-											Choose Basic
-										</BrandButton>
-									</div>
-								)}
+								{(() => {
+									const userPlan = userData?.planType || 'free';
+									const planName = plan.title.toLowerCase();
+									
+									// Free plan - always disabled
+									if (idx === 0) {
+										return (
+											<WhiteButton
+												disabled
+												style={{
+													opacity: "0.6",
+													cursor: "not-allowed",
+												}}
+											>
+												{userPlan === 'free' ? 'Current Plan' : 'Free Plan'}
+											</WhiteButton>
+										);
+									}
+									
+									// Basic plan (idx === 1)
+									if (idx === 1) {
+										const isCurrentPlan = userPlan === 'basic';
+										const isUpgraded = userPlan === 'pro';
+										
+										if (isCurrentPlan) {
+											return (
+												<WhiteButton
+													disabled
+													style={{
+														opacity: "0.6",
+														cursor: "not-allowed",
+													}}
+												>
+													Current Plan
+												</WhiteButton>
+											);
+										} else if (isUpgraded) {
+											return (
+												<WhiteButton
+													disabled
+													style={{
+														opacity: "0.6",
+														cursor: "not-allowed",
+													}}
+												>
+													Downgrade Not Available
+												</WhiteButton>
+											);
+										} else {
+											return (
+												<div className="transition-transform hover:scale-105">
+													<BrandButton 
+														onClick={() => handlePlanSelect('basic')}
+														style={{
+															background: "linear-gradient(90deg, #2196F3 0%, #00BCD4 100%)",
+															boxShadow: "0 8px 15px -4px rgba(59, 130, 246, 0.4)"
+														}}
+													>
+														Choose Basic
+													</BrandButton>
+												</div>
+											);
+										}
+									}
+									
+									// Pro plan (idx === 2)
+									if (idx === 2) {
+										const isCurrentPlan = userPlan === 'pro';
+										
+										if (isCurrentPlan) {
+											return (
+												<WhiteButton
+													disabled
+													style={{
+														opacity: "0.6",
+														cursor: "not-allowed",
+													}}
+												>
+													Current Plan
+												</WhiteButton>
+											);
+										} else {
+											return (
+												<div className="transition-transform hover:scale-105">
+													<BrandButton 
+														onClick={() => handlePlanSelect('pro')}
+														style={{
+															background: "linear-gradient(90deg, #0D47A1 0%, #7E57C2 100%)",
+															boxShadow: "0 8px 20px -4px rgba(59, 130, 246, 0.5)"
+														}}
+													>
+														Choose Pro
+													</BrandButton>
+												</div>
+											);
+										}
+									}
+								})()}
 							</div>
 						</div>
 					))}

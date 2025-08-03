@@ -44,7 +44,7 @@ export default function UploadPage() {
 
   useEffect(() => {
     if (!loading && !currentUser && isClient) {
-      router.push("/");
+      router.push("/login");
     }
   }, [currentUser, loading, router, isClient]);
 
