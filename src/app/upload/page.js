@@ -15,6 +15,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LanguageSelector from "@/components/LanguageSelector";
 import VideoAudioPlayer from "@/components/VideoAudioPlayer";
+import RestrictionModal from "@/components/RestrictionModal";
 
 export default function UploadPage() {
   const { currentUser, userData, loading } = useAuth();
@@ -34,6 +35,7 @@ export default function UploadPage() {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [restrictionModal, setRestrictionModal] = useState({ isOpen: false, type: '', title: '', message: '' });
   // Removed tab and url input state, only upload section is shown
 
   useEffect(() => {
@@ -140,10 +142,15 @@ export default function UploadPage() {
         let message = permission.reason;
         
         if (permission.restrictionType === 'ip_overuse') {
-          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue uploading, or use a different network.";
+          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue uploading.";
         }
         
-        alert(message);
+        setRestrictionModal({
+          isOpen: true,
+          type: permission.restrictionType === 'ip_overuse' ? 'ip_overuse' : 'limit_reached',
+          title: permission.restrictionType === 'ip_overuse' ? 'Upload Restricted' : 'Upload Limit Reached',
+          message: message
+        });
         return;
       }
     } catch (error) {
@@ -151,7 +158,12 @@ export default function UploadPage() {
       // Continue with fallback validation if IP check fails
       if (userData?.planType !== 'pro' && 
           (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
-        alert("You've reached your upload limit. Please upgrade your plan to continue uploading.");
+        setRestrictionModal({
+          isOpen: true,
+          type: 'limit_reached',
+          title: 'Upload Limit Reached',
+          message: "You've reached your upload limit. Please upgrade your plan to continue uploading."
+        });
         return;
       }
     }
@@ -163,7 +175,12 @@ export default function UploadPage() {
     // If it's an unsupported file type, alert the user
     if (fileType === 'unknown') {
       console.warn('Unsupported file type:', file.type);
-      alert("Sorry, this file type is not supported. Please try a PDF, image, or document file.");
+      setRestrictionModal({
+        isOpen: true,
+        type: 'unsupported_file',
+        title: 'Unsupported File Type',
+        message: 'Sorry, this file type is not supported. Please try a PDF, image, or document file.'
+      });
       return;
     }
     
@@ -193,10 +210,15 @@ export default function UploadPage() {
         let message = permission.reason;
         
         if (permission.restrictionType === 'ip_overuse') {
-          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue, or use a different network.";
+          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue.";
         }
         
-        alert(message);
+        setRestrictionModal({
+          isOpen: true,
+          type: permission.restrictionType === 'ip_overuse' ? 'ip_overuse' : 'limit_reached',
+          title: permission.restrictionType === 'ip_overuse' ? 'Upload Restricted' : 'Upload Limit Reached',
+          message: message
+        });
         return;
       }
     } catch (error) {
@@ -204,7 +226,12 @@ export default function UploadPage() {
       // Continue with fallback validation if IP check fails
       if (userData?.planType !== 'pro' && 
           (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
-        alert("You've reached your upload limit. Please upgrade your plan to continue.");
+        setRestrictionModal({
+          isOpen: true,
+          type: 'limit_reached',
+          title: 'Upload Limit Reached',
+          message: "You've reached your upload limit. Please upgrade your plan to continue."
+        });
         return;
       }
     }
@@ -512,7 +539,7 @@ export default function UploadPage() {
                       </p>
                     </div>
                     <div className="mt-2 text-xs text-red-600">
-                      <a href="/#pricing" className="font-medium underline hover:text-red-800">Upgrade to Pro</a> to continue uploading, or use a different network.
+                      <a href="/#pricing" className="font-medium underline hover:text-red-800">Upgrade to Pro</a> to continue uploading.
                     </div>
                   </div>
                 )}
@@ -813,6 +840,15 @@ export default function UploadPage() {
           </div>
         </div>
       )}
+      
+      {/* Restriction Modal */}
+      <RestrictionModal
+        isOpen={restrictionModal.isOpen}
+        onClose={() => setRestrictionModal({ ...restrictionModal, isOpen: false })}
+        type={restrictionModal.type}
+        title={restrictionModal.title}
+        message={restrictionModal.message}
+      />
     </>
   );
 }

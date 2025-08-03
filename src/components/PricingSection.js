@@ -1,6 +1,15 @@
+"use client";
+
 import React from "react";
 import BrandButton from "./BrandButton";
 import WhiteButton from "./WhiteButton";
+import { useAuth } from "@/lib/AuthContext";
+
+// Stripe payment links - replace with your actual Stripe payment links
+const STRIPE_PAYMENT_LINKS = {
+  basic: "https://buy.stripe.com/test_7sY8wRajdeImbdk0vW0x201",
+  pro: "https://buy.stripe.com/test_dRm14pbnhcAe2GOfqQ0x200"
+};
 
 const plans = [
 	{
@@ -38,6 +47,38 @@ const plans = [
 ];
 
 export default function PricingSection() {
+	const { currentUser } = useAuth();
+
+	const handlePlanSelect = async (planType) => {
+		// Check if user is logged in
+		if (!currentUser) {
+			// Redirect to login if not authenticated
+			window.location.href = '/login';
+			return;
+		}
+
+		// Record payment attempt in Firebase
+		try {
+			await fetch('/api/payment/initiate', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					userId: currentUser.uid,
+					planType: planType,
+					userEmail: currentUser.email
+				}),
+			});
+		} catch (error) {
+			console.error('Error recording payment attempt:', error);
+		}
+
+		// Redirect directly to Stripe payment link with user info
+		const paymentUrl = `${STRIPE_PAYMENT_LINKS[planType]}?client_reference_id=${currentUser.uid}&prefilled_email=${encodeURIComponent(currentUser.email)}`;
+		window.location.href = paymentUrl;
+	};
+
 	return (
 		<section id="pricing" className="pricing-section py-20">
 			<div className="mx-auto px-6 py-16 bg-gradient-to-br from-[#2196F3] to-[#1565C0] rounded-3xl shadow-lg" style={{ 
@@ -158,6 +199,7 @@ export default function PricingSection() {
 								) : idx === 2 ? (
 									<div className="transition-transform hover:scale-105">
 										<BrandButton 
+											onClick={() => handlePlanSelect('pro')}
 											style={{
 												background: "linear-gradient(90deg, #0D47A1 0%, #7E57C2 100%)",
 												boxShadow: "0 8px 20px -4px rgba(59, 130, 246, 0.5)"
@@ -169,6 +211,7 @@ export default function PricingSection() {
 								) : (
 									<div className="transition-transform hover:scale-105">
 										<BrandButton 
+											onClick={() => handlePlanSelect('basic')}
 											style={{
 												background: "linear-gradient(90deg, #2196F3 0%, #00BCD4 100%)",
 												boxShadow: "0 8px 15px -4px rgba(59, 130, 246, 0.4)"

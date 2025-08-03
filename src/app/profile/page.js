@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CheckCircleIcon, ExclamationCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import BillingSection from '@/components/BillingSection';
 
 export default function ProfilePage() {
   const { currentUser, userData, loading, updateUserProfile } = useAuth();
@@ -383,102 +384,8 @@ export default function ProfilePage() {
             </div>
 
             {/* Billing Section */}
-            <div className="mt-8 bg-white rounded-3xl shadow-xl border-2 border-blue-100 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900 font-poppins">
-                  Billing History
-                </h3>
-                <div className="text-sm text-gray-500">
-                  Last 6 months
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {/* Billing Item 1 */}
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                      <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">PRO Plan - Monthly</h4>
-                      <p className="text-xs text-gray-500">December 1, 2024</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">$19.99</div>
-                    <div className="text-xs text-green-600">Paid</div>
-                  </div>
-                </div>
-
-                {/* Billing Item 2 */}
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                      <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">PRO Plan - Monthly</h4>
-                      <p className="text-xs text-gray-500">November 1, 2024</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">$19.99</div>
-                    <div className="text-xs text-green-600">Paid</div>
-                  </div>
-                </div>
-
-                {/* Billing Item 3 */}
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                      <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">BASIC Plan - Monthly</h4>
-                      <p className="text-xs text-gray-500">October 1, 2024</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">$9.99</div>
-                    <div className="text-xs text-green-600">Paid</div>
-                  </div>
-                </div>
-
-                {/* Billing Item 4 */}
-                <div className="flex items-center justify-between py-4 border-b border-gray-100">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
-                      <ExclamationCircleIcon className="w-5 h-5 text-yellow-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">BASIC Plan - Monthly</h4>
-                      <p className="text-xs text-gray-500">September 1, 2024</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">$9.99</div>
-                    <div className="text-xs text-yellow-600">Pending</div>
-                  </div>
-                </div>
-
-                {/* Billing Item 5 */}
-                <div className="flex items-center justify-between py-4">
-                  <div className="flex items-center">
-                    <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-4">
-                      <XCircleIcon className="w-5 h-5 text-red-600" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">BASIC Plan - Monthly</h4>
-                      <p className="text-xs text-gray-500">August 1, 2024</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold text-gray-900">$9.99</div>
-                    <div className="text-xs text-red-600">Failed</div>
-                  </div>
-                </div>
-              </div>
+            <div className="mt-8">
+              <BillingSection />
             </div>
           </div>
         </div>

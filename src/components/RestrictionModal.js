@@ -134,7 +134,7 @@ export default function RestrictionModal({
             {type === 'ip_overuse' && (
               <div className="mt-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <p className="text-sm text-blue-700">
-                  <strong>Alternative:</strong> You can also try using a different network connection to continue with the free plan.
+                  <strong>Note:</strong> Multiple free accounts have been detected from your location. Please upgrade to Pro for unlimited access.
                 </p>
               </div>
             )}

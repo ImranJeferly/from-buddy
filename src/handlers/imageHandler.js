@@ -45,7 +45,7 @@ export const handleImageFile = async (file, setFileName, setUploadStatus, setOve
     const base64Image = await convertImageToBase64(file);
     
     // Step 2: Sending to API
-    updateStatus('processing', 'Sending to AI for analysis, this may take few minutes...');
+    updateStatus('processing', 'Sending to AI for analysis, this may take 2-3 minutes...');
     const response = await fetch('/api/analyze', {
       method: 'POST',
       headers: {
