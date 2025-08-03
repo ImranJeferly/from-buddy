@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, collection, query, where, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // Validate required environment variables
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -67,11 +69,25 @@ export async function POST(request) {
         const { userId, planType } = session.metadata || {};
 
         if (userId && planType) {
-          // Log successful payment - the client app will handle plan updates
-          console.log(`✅ Payment completed - User: ${userId}, Plan: ${planType}, Customer: ${session.customer}, Subscription: ${session.subscription}`);
-          
-          // Store the payment info for client-side plan update
-          // We could use a simple key-value store or just rely on Stripe's API for verification
+          try {
+            // Update user's plan in Firebase using client SDK
+            // This works because we updated Firestore rules to allow webhook updates
+            const userRef = doc(db, 'users', userId);
+            await updateDoc(userRef, {
+              planType: planType,
+              planStatus: 'active',
+              planStartDate: serverTimestamp(),
+              planExpiryDate: null, // For subscriptions, this is managed by Stripe
+              stripeCustomerId: session.customer,
+              stripeSubscriptionId: session.subscription,
+              lastUpdated: serverTimestamp(),
+              lastPlanUpdate: serverTimestamp(),
+            });
+
+            console.log(`✅ User ${userId} successfully upgraded to ${planType} plan`);
+          } catch (error) {
+            console.error(`❌ Failed to update user ${userId} plan:`, error);
+          }
         } else {
           console.error('❌ Missing userId or planType in session metadata:', { userId, planType });
         }
