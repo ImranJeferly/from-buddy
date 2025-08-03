@@ -9,7 +9,7 @@ export default function BillingSection() {
   const { currentUser, userData } = useAuth();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [portalLoading, setPortalLoading] = useState(false);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -42,32 +42,40 @@ export default function BillingSection() {
     }
   };
 
-  const handleManageBilling = async () => {
-    setPortalLoading(true);
+  const handleCancelSubscription = async () => {
+    if (!confirm('Are you sure you want to cancel your subscription? You will lose access to premium features.')) {
+      return;
+    }
+
+    setCancelLoading(true);
     
     try {
-      const response = await fetch('/api/stripe/customer-portal', {
+      const response = await fetch('/api/stripe/cancel-subscription', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           userId: currentUser.uid,
+          stripeCustomerId: userData?.stripeCustomerId,
+          stripeSubscriptionId: userData?.stripeSubscriptionId,
         }),
       });
 
-      const { url } = await response.json();
+      const result = await response.json();
 
-      if (response.ok && url) {
-        window.location.href = url;
+      if (response.ok) {
+        alert('Subscription cancelled successfully. Your plan has been changed to Free.');
+        // Refresh the page to update user data
+        window.location.reload();
       } else {
-        throw new Error('Failed to create portal session');
+        throw new Error(result.error || 'Failed to cancel subscription');
       }
     } catch (error) {
-      console.error('Error opening billing portal:', error);
-      alert('Unable to open billing portal. Please try again.');
+      console.error('Error cancelling subscription:', error);
+      alert('Unable to cancel subscription. Please try again.');
     } finally {
-      setPortalLoading(false);
+      setCancelLoading(false);
     }
   };
 
@@ -104,44 +112,36 @@ export default function BillingSection() {
     <div className="bg-white rounded-2xl shadow-lg p-6">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-2xl font-bold text-gray-900">Billing & Subscription</h3>
-        {userData?.stripeCustomerId && (
+        {userData?.planType !== 'free' && userData?.stripeSubscriptionId && (
           <button
-            onClick={handleManageBilling}
-            disabled={portalLoading}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            onClick={handleCancelSubscription}
+            disabled={cancelLoading}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
           >
-            {portalLoading ? 'Loading...' : 'Manage Billing'}
+            {cancelLoading ? 'Cancelling...' : 'Cancel Subscription'}
           </button>
         )}
       </div>
 
       {/* Current Plan */}
       <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-200">
-        <div className="flex justify-between items-center">
-          <div>
-            <h4 className="text-lg font-semibold text-blue-900 capitalize">
-              {userData?.planType || 'Free'} Plan
-            </h4>
-            <p className="text-blue-700">
-              Status: <span className="font-medium capitalize">{userData?.planStatus || 'Active'}</span>
-            </p>
-            {userData?.planType !== 'free' && (
-              <div className="text-blue-600 text-sm mt-1 space-y-1">
-                {userData?.planStartDate && (
-                  <p>Started: {formatDate(userData.planStartDate.toDate())}</p>
-                )}
-                {userData?.planRenewalDate && (
-                  <p>Next renewal: {formatDate(userData.planRenewalDate.toDate ? userData.planRenewalDate.toDate() : new Date(userData.planRenewalDate))}</p>
-                )}
-              </div>
-            )}
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-blue-900">
-              {userData?.uploadQuota === Infinity ? '∞' : (userData?.uploadQuota || 3)}
+        <div>
+          <h4 className="text-lg font-semibold text-blue-900 capitalize">
+            {userData?.planType || 'Free'} Plan
+          </h4>
+          <p className="text-blue-700">
+            Status: <span className="font-medium capitalize">{userData?.planStatus || 'Active'}</span>
+          </p>
+          {userData?.planType !== 'free' && (
+            <div className="text-blue-600 text-sm mt-1 space-y-1">
+              {userData?.planStartDate && (
+                <p>Started: {formatDate(userData.planStartDate.toDate())}</p>
+              )}
+              {userData?.planRenewalDate && (
+                <p>Next renewal: {formatDate(userData.planRenewalDate.toDate ? userData.planRenewalDate.toDate() : new Date(userData.planRenewalDate))}</p>
+              )}
             </div>
-            <div className="text-sm text-blue-700">Upload Limit</div>
-          </div>
+          )}
         </div>
       </div>
 
@@ -163,34 +163,40 @@ export default function BillingSection() {
             <p className="text-sm mt-1">Your payment history will appear here</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 mb-4">
+              Showing {transactions.length} transaction{transactions.length !== 1 ? 's' : ''}
+            </div>
             {transactions.map((transaction) => (
               <div key={transaction.id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-3 mb-2">
                       <h5 className="font-medium text-gray-900">{transaction.description}</h5>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(transaction.status)}`}>
-                        {transaction.status}
+                        {transaction.status.toUpperCase()}
                       </span>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {formatDate(transaction.createdAt)}
+                    <div className="text-sm text-gray-600 space-y-1">
+                      <p>Created: {formatDate(transaction.createdAt)}</p>
                       {transaction.paidAt && transaction.status === 'succeeded' && (
-                        <span> • Paid on {formatDate(transaction.paidAt)}</span>
+                        <p className="text-green-600">✅ Paid: {formatDate(transaction.paidAt)}</p>
                       )}
                       {transaction.failedAt && transaction.status === 'failed' && (
-                        <span> • Failed on {formatDate(transaction.failedAt)}</span>
+                        <p className="text-red-600">❌ Failed: {formatDate(transaction.failedAt)}</p>
                       )}
-                    </p>
+                      {transaction.stripeInvoiceId && (
+                        <p className="text-xs text-gray-500">Invoice ID: {transaction.stripeInvoiceId}</p>
+                      )}
+                    </div>
                   </div>
                   <div className="text-right">
-                    <div className={`text-lg font-semibold ${transaction.status === 'succeeded' ? 'text-green-600' : transaction.status === 'failed' ? 'text-red-600' : 'text-gray-900'}`}>
+                    <div className={`text-xl font-bold ${transaction.status === 'succeeded' ? 'text-green-600' : transaction.status === 'failed' ? 'text-red-600' : 'text-gray-900'}`}>
                       {formatAmount(transaction.amount, transaction.currency)}
                     </div>
-                    {transaction.stripeInvoiceId && (
-                      <p className="text-xs text-gray-500">ID: {transaction.stripeInvoiceId.slice(-8)}</p>
-                    )}
+                    <div className="text-sm text-gray-500 capitalize">
+                      {transaction.currency?.toUpperCase()}
+                    </div>
                   </div>
                 </div>
               </div>
