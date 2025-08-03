@@ -84,20 +84,30 @@ export async function POST(request) {
         } else {
           // Last resort: try to find user by email and guess plan from amount
           const customerEmail = session.customer_details?.email;
-          if (customerEmail) {
-            console.log('Trying to find user by email:', customerEmail);
-            
-            // Determine plan type from amount (in cents)
-            const amount = session.amount_total;
-            if (amount === 900) { // $9.00
+          
+          // Determine plan type from amount (in cents) - do this regardless of email
+          const amount = session.amount_total;
+          console.log('Detected amount for plan determination:', amount);
+          if (amount === 900 || amount === 850 || amount === 950) { // €9.00 (allowing for currency variations)
+            planType = 'basic';
+          } else if (amount === 2900 || amount === 2850 || amount === 2950) { // €29.00 (allowing for currency variations)
+            planType = 'pro';
+          } else {
+            // Try to determine from payment link source
+            const paymentLink = session.payment_link;
+            console.log('Payment link for plan detection:', paymentLink);
+            if (paymentLink && paymentLink.includes('7sY8wRajdeImbdk0vW0x201')) {
               planType = 'basic';
-            } else if (amount === 2900) { // $29.00
+            } else if (paymentLink && paymentLink.includes('dRm14pbnhcAe2GOfqQ0x200')) {
               planType = 'pro';
             }
-            
-            // We'll need to query Firebase to find the user by email
-            // For now, log this case and we'll handle it
-            console.log('Need to find user by email:', customerEmail, 'Amount:', amount, 'Guessed plan:', planType);
+          }
+          
+          console.log('Determined planType:', planType, 'from amount:', amount);
+          
+          if (customerEmail) {
+            console.log('Trying to find user by email:', customerEmail);
+            console.log('Need to find user by email:', customerEmail, 'Amount:', amount, 'Determined plan:', planType);
           }
         }
         
