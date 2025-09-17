@@ -1,10 +1,36 @@
-"use client";
-
 import React from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import Image from "next/image";
+
+export const metadata = {
+  title: "Medical Forms Explained - AI Form Helper for Healthcare Documents",
+  description: "Get clear explanations of medical forms, insurance claims, patient intake forms, HIPAA documents, and prescription forms. HIPAA-compliant AI assistance for healthcare paperwork.",
+  keywords: "medical forms, insurance claims, patient intake, HIPAA forms, prescription forms, medical consent, healthcare documents, medical AI assistant",
+  alternates: {
+    canonical: 'https://formbuddyai.com/medical-forms',
+  },
+  openGraph: {
+    title: 'Medical Forms Explained - AI Form Helper for Healthcare Documents',
+    description: 'Get clear explanations of medical forms, insurance claims, patient intake forms, HIPAA documents, and prescription forms. HIPAA-compliant AI assistance.',
+    url: 'https://formbuddyai.com/medical-forms',
+    images: [
+      {
+        url: '/section_2.png',
+        width: 1200,
+        height: 630,
+        alt: 'Medical Forms AI Assistant - Healthcare Document Help',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Medical Forms Explained - AI Form Helper for Healthcare Documents',
+    description: 'Get clear explanations of medical forms, insurance claims, patient intake forms, HIPAA documents, and prescription forms.',
+    images: ['/section_2.png'],
+  },
+};
 
 export default function MedicalFormsPage() {
   return (

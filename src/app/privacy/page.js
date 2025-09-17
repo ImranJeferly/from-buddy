@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Privacy Policy - Form Buddy AI | Data Protection & Security",
+  description: "Learn how Form Buddy AI protects your privacy and data. Our comprehensive privacy policy covers data collection, security measures, your rights, and GDPR compliance for all users.",
+  keywords: "privacy policy, data protection, GDPR compliance, data security, user privacy, form buddy privacy, AI privacy, document security, data rights",
+  alternates: {
+    canonical: 'https://formbuddyai.com/privacy',
+  },
+  openGraph: {
+    title: 'Privacy Policy - Form Buddy AI | Data Protection & Security',
+    description: 'Learn how Form Buddy AI protects your privacy and data. Comprehensive privacy policy covering data collection, security measures, and your rights.',
+    url: 'https://formbuddyai.com/privacy',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Privacy Policy',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Privacy Policy - Form Buddy AI | Data Protection & Security',
+    description: 'Learn how Form Buddy AI protects your privacy and data. Comprehensive privacy policy covering data collection and security.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

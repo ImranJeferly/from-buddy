@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Terms of Service - Form Buddy AI | User Agreement & Service Terms",
+  description: "Read Form Buddy AI's terms of service covering user responsibilities, subscription plans, data privacy, and service usage guidelines. Learn about our AI-powered form assistance platform.",
+  keywords: "terms of service, user agreement, form buddy terms, AI service terms, subscription terms, user responsibilities, service agreement, platform rules",
+  alternates: {
+    canonical: 'https://formbuddyai.com/terms',
+  },
+  openGraph: {
+    title: 'Terms of Service - Form Buddy AI | User Agreement & Service Terms',
+    description: 'Read Form Buddy AI\'s terms of service covering user responsibilities, subscription plans, data privacy, and service usage guidelines.',
+    url: 'https://formbuddyai.com/terms',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Terms of Service',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Terms of Service - Form Buddy AI | User Agreement & Service Terms',
+    description: 'Read Form Buddy AI\'s terms of service covering user responsibilities, subscription plans, and service usage guidelines.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

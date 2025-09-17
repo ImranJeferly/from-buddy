@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "School & Scholarship Forms AI Help - FAFSA, College Applications | Form Buddy AI",
+  description: "Get AI assistance with FAFSA, college applications, scholarship forms, and education paperwork. Understand requirements, deadlines, and maximize your chances of acceptance and financial aid.",
+  keywords: "FAFSA help, college application forms, scholarship applications, education forms AI, student aid forms, university applications, financial aid assistance, college paperwork help",
+  alternates: {
+    canonical: 'https://formbuddyai.com/school-scholarship-forms',
+  },
+  openGraph: {
+    title: 'School & Scholarship Forms AI Help - FAFSA, College Applications',
+    description: 'Get AI assistance with FAFSA, college applications, scholarship forms, and education paperwork. Understand requirements and maximize your chances.',
+    url: 'https://formbuddyai.com/school-scholarship-forms',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - School & Scholarship Forms Assistant',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'School & Scholarship Forms AI Help - FAFSA, College Applications',
+    description: 'Get AI assistance with FAFSA, college applications, scholarship forms, and education paperwork.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Profile Settings - Form Buddy AI | Manage Your Account",
+  description: "Manage your Form Buddy AI account settings, view your subscription plan, update profile information, and track your usage statistics.",
+  keywords: "profile settings, account management, subscription plan, form buddy profile, user settings, account dashboard",
+  alternates: {
+    canonical: 'https://formbuddyai.com/profile',
+  },
+  openGraph: {
+    title: 'Profile Settings - Form Buddy AI | Manage Your Account',
+    description: 'Manage your Form Buddy AI account settings, view subscription plan, and update profile information.',
+    url: 'https://formbuddyai.com/profile',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Profile Settings',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Profile Settings - Form Buddy AI | Manage Your Account',
+    description: 'Manage your Form Buddy AI account settings and subscription plan.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React, { useEffect, useState } from "react";

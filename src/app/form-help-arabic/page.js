@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "مساعدة ملء النماذج باللغة العربية - الهجرة، اللجوء | Form Buddy AI",
+  description: "افهم أي نموذج معقد بشرح واضح باللغة العربية. احصل على مساعدة في نماذج الهجرة، اللجوء، التأمين الطبي، والخدمات الاجتماعية مع الشرح الصوتي بالعربية.",
+  keywords: "مساعدة نماذج عربية, نماذج الهجرة بالعربية, نماذج اللجوء بالعربية, تعبئة نماذج عربية, مساعدة عربية للنماذج, شرح النماذج بالعربية",
+  alternates: {
+    canonical: 'https://formbuddyai.com/form-help-arabic',
+  },
+  openGraph: {
+    title: 'مساعدة ملء النماذج باللغة العربية - الهجرة، اللجوء',
+    description: 'افهم أي نموذج معقد بشرح واضح باللغة العربية. مساعدة في نماذج الهجرة واللجوء والخدمات الاجتماعية.',
+    url: 'https://formbuddyai.com/form-help-arabic',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - مساعدة بالعربية',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'مساعدة ملء النماذج باللغة العربية',
+    description: 'افهم أي نموذج معقد بشرح واضح باللغة العربية. شرح صوتي بالعربية.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

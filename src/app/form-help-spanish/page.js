@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Ayuda con Formularios en Español - Inmigración, Impuestos | Form Buddy AI",
+  description: "Comprende formularios complejos con explicaciones claras en español. Ayuda con I-485, I-130, N-400, impuestos, seguros médicos y más. Narración de voz nativa en español.",
+  keywords: "formularios en español, ayuda inmigración español, formularios hispanos, I-485 español, N-400 español, impuestos en español, form buddy español, asistencia formularios",
+  alternates: {
+    canonical: 'https://formbuddyai.com/form-help-spanish',
+  },
+  openGraph: {
+    title: 'Ayuda con Formularios en Español - Inmigración, Impuestos',
+    description: 'Comprende formularios complejos con explicaciones claras en español. Ayuda con inmigración, impuestos, seguros médicos y más.',
+    url: 'https://formbuddyai.com/form-help-spanish',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Ayuda en Español',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ayuda con Formularios en Español - Inmigración, Impuestos',
+    description: 'Comprende formularios complejos con explicaciones claras en español. Narración de voz nativa.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

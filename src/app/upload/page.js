@@ -1,9 +1,35 @@
-"use client";
-
 import { handleImageFile } from "../../handlers/imageHandler";
 import { getFileType } from "../../handlers/fileTypeHelper";
-import { checkUploadPermission } from "@/lib/ipRestrictions";
-import { useUploadQuota } from "@/hooks/useUploadQuota";
+
+export const metadata = {
+  title: "Upload & Analyze Forms - Form Buddy AI",
+  description: "Upload your forms, documents, or images and get instant AI-powered explanations. Supports PDF, DOCX, JPG, PNG. Secure, fast, and easy to understand.",
+  keywords: "upload form, analyze document, PDF upload, form analysis, AI document reader, file upload, form assistance",
+  alternates: {
+    canonical: 'https://formbuddyai.com/upload',
+  },
+  openGraph: {
+    title: 'Upload & Analyze Forms - Form Buddy AI',
+    description: 'Upload your forms, documents, or images and get instant AI-powered explanations. Supports PDF, DOCX, JPG, PNG.',
+    url: 'https://formbuddyai.com/upload',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Upload Forms to Form Buddy AI',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Upload & Analyze Forms - Form Buddy AI',
+    description: 'Upload your forms, documents, or images and get instant AI-powered explanations.',
+    images: ['/ico.png'],
+  },
+};
+
+"use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -15,12 +41,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LanguageSelector from "@/components/LanguageSelector";
 import VideoAudioPlayer from "@/components/VideoAudioPlayer";
-import RestrictionModal from "@/components/RestrictionModal";
 
 export default function UploadPage() {
   const { currentUser, userData, loading } = useAuth();
   const router = useRouter();
-  const { quotaInfo, isRestricted, restrictionReason, restrictionType, remaining } = useUploadQuota(userData, currentUser?.uid);
   const [isClient, setIsClient] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -35,7 +59,6 @@ export default function UploadPage() {
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [hasAutoExpanded, setHasAutoExpanded] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [restrictionModal, setRestrictionModal] = useState({ isOpen: false, type: '', title: '', message: '' });
   // Removed tab and url input state, only upload section is shown
 
   useEffect(() => {
@@ -44,7 +67,7 @@ export default function UploadPage() {
 
   useEffect(() => {
     if (!loading && !currentUser && isClient) {
-      router.push("/login");
+      router.push("/");
     }
   }, [currentUser, loading, router, isClient]);
 
@@ -133,39 +156,12 @@ export default function UploadPage() {
   // Store the selected file for later processing
   const [selectedFile, setSelectedFile] = useState(null);
   
-  const handleFileUpload = async (file) => {
-    // Check upload permissions including IP restrictions
-    try {
-      const permission = await checkUploadPermission(currentUser?.uid, userData);
-      
-      if (!permission.canUpload) {
-        let message = permission.reason;
-        
-        if (permission.restrictionType === 'ip_overuse') {
-          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue uploading.";
-        }
-        
-        setRestrictionModal({
-          isOpen: true,
-          type: permission.restrictionType === 'ip_overuse' ? 'ip_overuse' : 'limit_reached',
-          title: permission.restrictionType === 'ip_overuse' ? 'Upload Restricted' : 'Upload Limit Reached',
-          message: message
-        });
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking upload permission:', error);
-      // Continue with fallback validation if IP check fails
-      if (userData?.planType !== 'pro' && 
-          (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
-        setRestrictionModal({
-          isOpen: true,
-          type: 'limit_reached',
-          title: 'Upload Limit Reached',
-          message: "You've reached your upload limit. Please upgrade your plan to continue uploading."
-        });
-        return;
-      }
+  const handleFileUpload = (file) => {
+    // Check if user has reached their upload limit
+    if (userData?.planType !== 'pro' && 
+        (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
+      alert("You've reached your upload limit. Please upgrade your plan to continue uploading.");
+      return;
     }
     
     // Determine file type using our helper function
@@ -175,12 +171,7 @@ export default function UploadPage() {
     // If it's an unsupported file type, alert the user
     if (fileType === 'unknown') {
       console.warn('Unsupported file type:', file.type);
-      setRestrictionModal({
-        isOpen: true,
-        type: 'unsupported_file',
-        title: 'Unsupported File Type',
-        message: 'Sorry, this file type is not supported. Please try a PDF, image, or document file.'
-      });
+      alert("Sorry, this file type is not supported. Please try a PDF, image, or document file.");
       return;
     }
     
@@ -201,41 +192,13 @@ export default function UploadPage() {
 
 
 
-  const handleGenerateExplanation = async () => {
-    // Check upload permissions including IP restrictions
-    try {
-      const permission = await checkUploadPermission(currentUser?.uid, userData);
-      
-      if (!permission.canUpload) {
-        let message = permission.reason;
-        
-        if (permission.restrictionType === 'ip_overuse') {
-          message = "Multiple free accounts detected from your location. Upgrade to Pro to continue.";
-        }
-        
-        setRestrictionModal({
-          isOpen: true,
-          type: permission.restrictionType === 'ip_overuse' ? 'ip_overuse' : 'limit_reached',
-          title: permission.restrictionType === 'ip_overuse' ? 'Upload Restricted' : 'Upload Limit Reached',
-          message: message
-        });
-        return;
-      }
-    } catch (error) {
-      console.error('Error checking upload permission:', error);
-      // Continue with fallback validation if IP check fails
-      if (userData?.planType !== 'pro' && 
-          (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
-        setRestrictionModal({
-          isOpen: true,
-          type: 'limit_reached',
-          title: 'Upload Limit Reached',
-          message: "You've reached your upload limit. Please upgrade your plan to continue."
-        });
-        return;
-      }
+  const handleGenerateExplanation = () => {
+    // Check if user has reached their upload limit
+    if (userData?.planType !== 'pro' && 
+        (userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) {
+      alert("You've reached your upload limit. Please upgrade your plan to continue.");
+      return;
     }
-    
     // Only process uploaded file
     if (selectedFile && fileName) {
       console.log('Processing file:', fileName, 'in language:', selectedLanguage);
@@ -262,10 +225,7 @@ export default function UploadPage() {
                 setFileName, 
                 setUploadStatus, 
                 setOverlayMessage, 
-                keepOverlayVisible,
-                userData,
-                currentUser?.uid,
-                selectedLanguage
+                keepOverlayVisible
               );
               break;
             case 'pdf':
@@ -440,13 +400,13 @@ export default function UploadPage() {
       <div style={{ paddingTop: "80px" }}> {/* Add padding to account for fixed navbar */}
         <div className="min-h-screen bg-gradient-to-b from-white to-blue-50 flex items-center justify-center py-12 relative">
           {/* Right Side Video Section */}
-          <div className={`fixed right-8 bottom-8 z-40 transition-all duration-700 ease-in-out mobile-video-section ${
+          <div className={`fixed right-8 bottom-8 z-40 transition-all duration-700 ease-in-out ${
             isVideoExpanded ? 'h-auto' : 'h-16'
           }`}>
             {/* Toggle Button */}
             <button
               onClick={toggleVideoSection}
-              className="absolute top-0 right-6 w-14 h-14 bg-gradient-to-r from-[#2196F3] to-[#1976D2] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 z-50 flex items-center justify-center mobile-video-toggle"
+              className="absolute top-0 right-6 w-14 h-14 bg-gradient-to-r from-[#2196F3] to-[#1976D2] text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 z-50 flex items-center justify-center"
               style={{ transform: 'translateY(-50%)' }}
             >
               <svg 
@@ -465,7 +425,7 @@ export default function UploadPage() {
             </button>
 
             {/* Video Container */}
-            <div className={`w-96 bg-white rounded-3xl shadow-2xl border-2 border-gray-200 overflow-hidden transition-all duration-700 mobile-video-container ${
+            <div className={`w-96 bg-white rounded-3xl shadow-2xl border-2 border-gray-200 overflow-hidden transition-all duration-700 ${
               isVideoExpanded ? 'opacity-100' : 'opacity-0 h-0'
             }`}>
               {/* Video Content */}
@@ -500,22 +460,21 @@ export default function UploadPage() {
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
             {/* Welcome Section */}
             <div className="text-center mb-6 md:mb-6 mb-10">
-              <div className="mb-4">
-                <h2 className="text-base md:text-3xl font-bold text-gray-900 font-poppins text-center">
-                  Welcome, {currentUser?.displayName || 'User'}!{' '}
-                  <Image
-                    src="/hand.png"
-                    alt="Waving hand"
-                    width={28}
-                    height={28}
-                    className="waving-hand md:w-8 md:h-8 w-7 h-7 inline-block"
-                    style={{
-                      animation: 'wave 1.5s ease-in-out infinite',
-                      transformOrigin: '70% 70%',
-                      verticalAlign: 'baseline'
-                    }}
-                  />
+              <div className="flex items-center justify-center mb-4">
+                <h2 className="text-base md:text-3xl font-bold text-gray-900 font-poppins mr-3">
+                  Welcome, {currentUser?.displayName || 'User'}!
                 </h2>
+                <Image
+                  src="/hand.png"
+                  alt="Waving hand"
+                  width={28}
+                  height={28}
+                  className="waving-hand md:w-8 md:h-8 w-7 h-7"
+                  style={{
+                    animation: 'wave 1.5s ease-in-out infinite',
+                    transformOrigin: '70% 70%'
+                  }}
+                />
               </div>
               <p className="text-gray-600 text-base md:text-lg">
                 Ready to upload and analyze your forms? Let's get started!
@@ -525,56 +484,31 @@ export default function UploadPage() {
             {/* Add spacing between welcome and upload/explanation section on mobile only */}
             <div className="block md:hidden h-8"></div>
 
-            {/* Usage Limit Bar - With IP Restrictions */}
+            {/* Usage Limit Bar - Simplified */}
             {userData?.planType !== 'pro' && (
-              <div className="mb-6">
-                {isRestricted && restrictionType === 'ip_overuse' && (
-                  <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-sm text-red-700">
-                        <span className="font-medium">Uploads blocked:</span> Multiple free accounts detected from your location.
-                      </p>
-                    </div>
-                    <div className="mt-2 text-xs text-red-600">
-                      <a href="/#pricing" className="font-medium underline hover:text-red-800">Upgrade to Pro</a> to continue uploading.
-                    </div>
+              <div className="flex items-center mb-6">
+                <div className="w-full">
+                  <div className="flex justify-between mb-1 items-center">
+                    <span className="text-xs font-medium text-gray-600">
+                      {userData?.uploadCount || 0}/{userData?.planType === 'basic' ? '15' : '3'} forms
+                    </span>
+                    {((userData?.uploadCount || 0) >= (userData?.planType === 'basic' ? 15 : 3)) && (
+                      <a href="/#pricing" className="text-xs font-medium text-blue-600">Upgrade →</a>
+                    )}
                   </div>
-                )}
-                
-                <div className="flex items-center">
-                  <div className="w-full">
-                    <div className="flex justify-between mb-1 items-center">
-                      <span className="text-xs font-medium text-gray-600">
-                        {userData?.uploadCount || 0}/{quotaInfo?.quota === Infinity ? '∞' : (quotaInfo?.quota || (userData?.planType === 'basic' ? 15 : 3))} forms
-                        {isRestricted && restrictionType === 'ip_overuse' && (
-                          <span className="ml-2 text-red-500">(Blocked)</span>
-                        )}
-                      </span>
-                      {(isRestricted || (userData?.uploadCount || 0) >= (quotaInfo?.quota || (userData?.planType === 'basic' ? 15 : 3))) && (
-                        <a href="/#pricing" className="text-xs font-medium text-blue-600">Upgrade →</a>
-                      )}
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                      <div 
-                        className={`h-1.5 rounded-full transition-all duration-500 ${
-                          isRestricted && restrictionType === 'ip_overuse'
-                            ? 'bg-red-500'
-                            : userData?.planType === 'basic' 
-                            ? 'bg-blue-500' 
-                            : ((userData?.uploadCount || 0) >= (quotaInfo?.quota || 3)) 
-                              ? 'bg-red-500' 
-                              : 'bg-green-500'
-                        }`}
-                        style={{ 
-                          width: isRestricted && restrictionType === 'ip_overuse' 
-                            ? '100%' 
-                            : `${Math.min(100, ((userData?.uploadCount || 0) / (quotaInfo?.quota || (userData?.planType === 'basic' ? 15 : 3))) * 100)}%` 
-                        }}
-                      ></div>
-                    </div>
+                  <div className="w-full bg-gray-200 rounded-full h-1.5">
+                    <div 
+                      className={`h-1.5 rounded-full transition-all duration-500 ${
+                        userData?.planType === 'basic' 
+                          ? 'bg-blue-500' 
+                          : ((userData?.uploadCount || 0) >= 3) 
+                            ? 'bg-red-500' 
+                            : 'bg-green-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.min(100, ((userData?.uploadCount || 0) / (userData?.planType === 'basic' ? 15 : 3)) * 100)}%` 
+                      }}
+                    ></div>
                   </div>
                 </div>
               </div>
@@ -596,7 +530,7 @@ export default function UploadPage() {
                     <div 
                       onDragEnter={uploadStatus === 'uploaded' ? null : handleDragEnter}
                       onDragOver={uploadStatus === 'uploaded' ? null : handleDragOver}
-                      onDragLeave={uploadStatus === 'uploaded' ? null : handleDragLeave}
+                      onDragLeave={uploadStatus === 'uploaded' ? null : handleDrheagLeave}
                       onDrop={uploadStatus === 'uploaded' ? null : handleDrop}
                       onClick={uploadStatus === 'uploaded' ? null : triggerFileInput}
                       onMouseEnter={() => !uploadStatus && setIsHovered(true)}
@@ -606,6 +540,8 @@ export default function UploadPage() {
                           ? 'border-[#2196F3] bg-blue-100 scale-[1.02]' 
                           : uploadStatus === 'processing'
                           ? 'border-yellow-300 bg-blue-50'
+
+
                           : uploadStatus === 'uploaded'
                           ? 'border-blue-400 bg-blue-50'
                           : uploadStatus === 'success'
@@ -629,6 +565,7 @@ export default function UploadPage() {
                                 isDragging || isHovered ? 'animate-bounce' : ''
                               }`}
                             >
+                              
                               <path 
                                 strokeLinecap="round" 
                                 strokeLinejoin="round" 
@@ -840,15 +777,6 @@ export default function UploadPage() {
           </div>
         </div>
       )}
-      
-      {/* Restriction Modal */}
-      <RestrictionModal
-        isOpen={restrictionModal.isOpen}
-        onClose={() => setRestrictionModal({ ...restrictionModal, isOpen: false })}
-        type={restrictionModal.type}
-        title={restrictionModal.title}
-        message={restrictionModal.message}
-      />
     </>
   );
 }

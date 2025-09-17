@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Upgrade to Pro - Form Buddy AI Pricing & Plans | Unlimited Form Analysis",
+  description: "Upgrade to Form Buddy AI Pro for unlimited form uploads, 50+ languages, voice explanations, and priority support. Choose from Basic or Pro plans. Secure payment processing.",
+  keywords: "form buddy pricing, upgrade to pro, form analysis subscription, unlimited forms, multilingual form help, AI form assistant pricing, payment plans, subscription upgrade",
+  alternates: {
+    canonical: 'https://formbuddyai.com/payment',
+  },
+  openGraph: {
+    title: 'Upgrade to Pro - Form Buddy AI Pricing & Plans',
+    description: 'Upgrade to Form Buddy AI Pro for unlimited form uploads, 50+ languages, voice explanations, and priority support. Secure payment processing.',
+    url: 'https://formbuddyai.com/payment',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Upgrade to Pro',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Upgrade to Pro - Form Buddy AI Pricing & Plans',
+    description: 'Upgrade to Form Buddy AI Pro for unlimited form uploads, 50+ languages, voice explanations, and priority support.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React, { useState, useEffect } from "react";

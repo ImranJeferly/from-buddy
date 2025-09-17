@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Multilingual Form Help - 50+ Languages Support | Form Buddy AI",
+  description: "Get form explanations in your native language! Form Buddy AI supports 50+ languages including Spanish, Chinese, Arabic, French, German, and more. Voice narration and cultural context included.",
+  keywords: "multilingual form help, form explanations in multiple languages, Spanish form help, Chinese form assistance, Arabic form support, multilingual AI, native language form help, international form assistance",
+  alternates: {
+    canonical: 'https://formbuddyai.com/form-explanation-in-your-language',
+  },
+  openGraph: {
+    title: 'Multilingual Form Help - 50+ Languages Support',
+    description: 'Get form explanations in your native language! Support for 50+ languages including Spanish, Chinese, Arabic, French, German, and more.',
+    url: 'https://formbuddyai.com/form-explanation-in-your-language',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Multilingual Form Help',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Multilingual Form Help - 50+ Languages Support',
+    description: 'Get form explanations in your native language! Support for 50+ languages with voice narration and cultural context.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

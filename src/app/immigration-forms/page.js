@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Immigration Forms AI Assistant - I-485, I-130, N-400 Help | Form Buddy AI",
+  description: "Expert AI help with immigration forms including I-485, I-130, I-765, N-400, and more. Get multilingual explanations for USCIS paperwork in 50+ languages. Secure and confidential processing.",
+  keywords: "immigration forms AI, USCIS forms help, I-485 assistance, I-130 help, N-400 application, immigration paperwork, visa forms, green card application, citizenship forms, multilingual immigration help",
+  alternates: {
+    canonical: 'https://formbuddyai.com/immigration-forms',
+  },
+  openGraph: {
+    title: 'Immigration Forms AI Assistant - I-485, I-130, N-400 Help',
+    description: 'Expert AI help with immigration forms including I-485, I-130, I-765, N-400, and more. Get multilingual explanations for USCIS paperwork in 50+ languages.',
+    url: 'https://formbuddyai.com/immigration-forms',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Immigration Forms Assistant',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Immigration Forms AI Assistant - I-485, I-130, N-400 Help',
+    description: 'Expert AI help with immigration forms including I-485, I-130, I-765, N-400, and more. Get multilingual explanations for USCIS paperwork.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Create Account - Join Form Buddy AI | Free AI Form Assistant Registration",
+  description: "Join Form Buddy AI for free! Create your account to get AI-powered form explanations, multilingual support, and secure document analysis. Sign up with email, Google, or Facebook.",
+  keywords: "form buddy register, create account, sign up free, AI form assistant registration, free form help, join form buddy, new user registration, get started",
+  alternates: {
+    canonical: 'https://formbuddyai.com/register',
+  },
+  openGraph: {
+    title: 'Create Account - Join Form Buddy AI | Free Registration',
+    description: 'Join Form Buddy AI for free! Create your account to get AI-powered form explanations, multilingual support, and secure document analysis.',
+    url: 'https://formbuddyai.com/register',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Register',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Create Account - Join Form Buddy AI | Free Registration',
+    description: 'Join Form Buddy AI for free! Get AI-powered form explanations and multilingual support.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React, { useState, useEffect } from "react";

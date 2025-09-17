@@ -6,6 +6,34 @@ import FeaturesColumn from "../components/FeaturesColumn";
 import PricingSection from "../components/PricingSection";
 import Footer from "../components/Footer";
 
+export const metadata = {
+  title: "Form Buddy AI - Upload Any Form, Get AI Explanations",
+  description: "Struggling with complex forms? Upload any PDF, image, or document and get clear, step-by-step AI explanations for every field. Medical, legal, business forms made simple.",
+  keywords: "form buddy AI, form explanation, document analysis, PDF reader, form help, AI assistant, medical forms, legal forms, business forms",
+  alternates: {
+    canonical: 'https://formbuddyai.com',
+  },
+  openGraph: {
+    title: 'Form Buddy AI - Upload Any Form, Get AI Explanations',
+    description: 'Struggling with complex forms? Upload any PDF, image, or document and get clear, step-by-step AI explanations for every field.',
+    url: 'https://formbuddyai.com',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - AI-powered form explanation tool',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Form Buddy AI - Upload Any Form, Get AI Explanations',
+    description: 'Struggling with complex forms? Upload any PDF, image, or document and get clear, step-by-step AI explanations for every field.',
+    images: ['/ico.png'],
+  },
+};
+
 // Dynamically import client components with loading states
 const ClientHero = dynamic(() => import("../components/ClientHero"), {
   loading: () => (

@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "中文表格填写帮助 - 移民、税务、银行表格 | Form Buddy AI",
+  description: "用中文理解复杂表格。获得移民表格(I-485, I-130, N-400)、税务申报、银行开户等表格的清晰中文解释和语音指导。专为中文用户设计。",
+  keywords: "中文表格帮助, 移民表格中文, 税务表格中文, 银行开户中文, I-485中文, N-400中文, 中文填表助手, 华人表格帮助, 中文语音解释",
+  alternates: {
+    canonical: 'https://formbuddyai.com/form-help-chinese',
+  },
+  openGraph: {
+    title: '中文表格填写帮助 - 移民、税务、银行表格',
+    description: '用中文理解复杂表格。获得移民、税务、银行等表格的清晰中文解释和语音指导。专为中文用户设计。',
+    url: 'https://formbuddyai.com/form-help-chinese',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - 中文帮助',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '中文表格填写帮助 - 移民、税务、银行表格',
+    description: '用中文理解复杂表格。获得移民、税务、银行等表格的清晰中文解释。',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

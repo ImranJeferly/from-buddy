@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Aide pour Remplir les Formulaires en Français - Immigration, Impôts | Form Buddy AI",
+  description: "Comprenez n'importe quel formulaire complexe avec des explications claires en français. Aide pour l'immigration, les impôts, l'assurance maladie et plus avec narration vocale française.",
+  keywords: "formulaires en français, aide immigration français, impôts français, assistance formulaires français, form buddy français, explication formulaires français, aide francophone",
+  alternates: {
+    canonical: 'https://formbuddyai.com/form-help-french',
+  },
+  openGraph: {
+    title: 'Aide pour Remplir les Formulaires en Français - Immigration, Impôts',
+    description: 'Comprenez n\'importe quel formulaire complexe avec des explications claires en français. Aide pour l\'immigration, les impôts, l\'assurance maladie et plus.',
+    url: 'https://formbuddyai.com/form-help-french',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Aide en Français',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Aide pour Remplir les Formulaires en Français',
+    description: 'Comprenez n\'importe quel formulaire complexe avec des explications claires en français. Narration vocale française.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

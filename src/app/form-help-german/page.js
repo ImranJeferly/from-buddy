@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Hilfe beim Ausfüllen von Formularen auf Deutsch - Einwanderung, Steuern | Form Buddy AI",
+  description: "Verstehen Sie jedes komplexe Formular mit klaren Erklärungen auf Deutsch. Hilfe bei Einwanderung, Steuern, Krankenversicherung und mehr mit deutscher Sprachausgabe.",
+  keywords: "deutsche Formularhilfe, Einwanderung deutsch, Steuern deutsch, Formular Hilfe deutsch, deutsche Erklärungen, form buddy deutsch, deutsche Sprachunterstützung",
+  alternates: {
+    canonical: 'https://formbuddyai.com/form-help-german',
+  },
+  openGraph: {
+    title: 'Hilfe beim Ausfüllen von Formularen auf Deutsch - Einwanderung, Steuern',
+    description: 'Verstehen Sie jedes komplexe Formular mit klaren Erklärungen auf Deutsch. Hilfe bei Einwanderung, Steuern, Krankenversicherung und mehr.',
+    url: 'https://formbuddyai.com/form-help-german',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Deutsche Hilfe',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Hilfe beim Ausfüllen von Formularen auf Deutsch',
+    description: 'Verstehen Sie jedes komplexe Formular mit klaren Erklärungen auf Deutsch. Deutsche Sprachausgabe.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

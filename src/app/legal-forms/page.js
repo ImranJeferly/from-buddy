@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Legal Forms AI Assistant - Contract & Court Document Help | Form Buddy AI",
+  description: "Get expert AI explanations for legal documents, contracts, court forms, and legal paperwork. Understand complex legal terminology, clauses, and requirements in plain English. Secure and confidential analysis.",
+  keywords: "legal forms AI, legal documents, contract analysis, court forms, legal paperwork, legal terminology, AI legal assistant, legal document help, contract explanation, legal advice",
+  alternates: {
+    canonical: 'https://formbuddyai.com/legal-forms',
+  },
+  openGraph: {
+    title: 'Legal Forms AI Assistant - Contract & Court Document Help',
+    description: 'Get expert AI explanations for legal documents, contracts, court forms, and legal paperwork. Understand complex legal terminology in plain English.',
+    url: 'https://formbuddyai.com/legal-forms',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Legal Forms Assistant',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Legal Forms AI Assistant - Contract & Court Document Help',
+    description: 'Get expert AI explanations for legal documents, contracts, court forms, and legal paperwork. Understand complex legal terminology in plain English.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";

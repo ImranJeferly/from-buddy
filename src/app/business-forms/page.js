@@ -1,3 +1,31 @@
+export const metadata = {
+  title: "Business Forms AI Assistant - Tax, Registration & Corporate Documents | Form Buddy AI",
+  description: "Expert AI help for business forms, tax returns, corporate registration, employment paperwork, and business contracts. Understand complex business regulations and compliance requirements with confidence.",
+  keywords: "business forms AI, corporate documents, business tax forms, business registration, employment forms, business contracts, business AI assistant, corporate paperwork, business compliance",
+  alternates: {
+    canonical: 'https://formbuddyai.com/business-forms',
+  },
+  openGraph: {
+    title: 'Business Forms AI Assistant - Tax, Registration & Corporate Documents',
+    description: 'Expert AI help for business forms, tax returns, corporate registration, employment paperwork, and business contracts. Understand complex business regulations with confidence.',
+    url: 'https://formbuddyai.com/business-forms',
+    images: [
+      {
+        url: '/ico.png',
+        width: 1200,
+        height: 630,
+        alt: 'Form Buddy AI - Business Forms Assistant',
+      }
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Business Forms AI Assistant - Tax, Registration & Corporate Documents',
+    description: 'Expert AI help for business forms, tax returns, corporate registration, employment paperwork, and business contracts.',
+    images: ['/ico.png'],
+  },
+};
+
 "use client";
 
 import React from "react";
