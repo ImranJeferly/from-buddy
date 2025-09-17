@@ -1,31 +1,3 @@
-export const metadata = {
-  title: "Login - Access Your Form Buddy AI Account | Secure Sign In",
-  description: "Sign in to your Form Buddy AI account to access unlimited form analysis, multilingual support, and AI-powered document explanations. Secure login with Google and Facebook options.",
-  keywords: "form buddy login, sign in, user account, form analysis account, AI form helper login, secure login, google sign in, facebook sign in",
-  alternates: {
-    canonical: 'https://formbuddyai.com/login',
-  },
-  openGraph: {
-    title: 'Login - Access Your Form Buddy AI Account',
-    description: 'Sign in to your Form Buddy AI account to access unlimited form analysis, multilingual support, and AI-powered document explanations.',
-    url: 'https://formbuddyai.com/login',
-    images: [
-      {
-        url: '/ico.png',
-        width: 1200,
-        height: 630,
-        alt: 'Form Buddy AI - Login',
-      }
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Login - Access Your Form Buddy AI Account',
-    description: 'Sign in to your Form Buddy AI account to access unlimited form analysis and multilingual support.',
-    images: ['/ico.png'],
-  },
-};
-
 "use client";
 
 import React, { useState, useEffect } from "react";

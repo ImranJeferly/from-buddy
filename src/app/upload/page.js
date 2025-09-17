@@ -1,35 +1,7 @@
+"use client";
+
 import { handleImageFile } from "../../handlers/imageHandler";
 import { getFileType } from "../../handlers/fileTypeHelper";
-
-export const metadata = {
-  title: "Upload & Analyze Forms - Form Buddy AI",
-  description: "Upload your forms, documents, or images and get instant AI-powered explanations. Supports PDF, DOCX, JPG, PNG. Secure, fast, and easy to understand.",
-  keywords: "upload form, analyze document, PDF upload, form analysis, AI document reader, file upload, form assistance",
-  alternates: {
-    canonical: 'https://formbuddyai.com/upload',
-  },
-  openGraph: {
-    title: 'Upload & Analyze Forms - Form Buddy AI',
-    description: 'Upload your forms, documents, or images and get instant AI-powered explanations. Supports PDF, DOCX, JPG, PNG.',
-    url: 'https://formbuddyai.com/upload',
-    images: [
-      {
-        url: '/ico.png',
-        width: 1200,
-        height: 630,
-        alt: 'Upload Forms to Form Buddy AI',
-      }
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Upload & Analyze Forms - Form Buddy AI',
-    description: 'Upload your forms, documents, or images and get instant AI-powered explanations.',
-    images: ['/ico.png'],
-  },
-};
-
-"use client";
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";

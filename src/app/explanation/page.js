@@ -1,31 +1,3 @@
-export const metadata = {
-  title: "Form Explanation Results - AI-Powered Document Analysis | Form Buddy AI",
-  description: "View detailed AI explanations for your uploaded forms and documents. Get field-by-field guidance, requirements, and step-by-step instructions to complete your paperwork accurately.",
-  keywords: "form explanation, document analysis results, AI form help, form field explanations, document guidance, form assistance, AI document reader, form completion help",
-  alternates: {
-    canonical: 'https://formbuddyai.com/explanation',
-  },
-  openGraph: {
-    title: 'Form Explanation Results - AI-Powered Document Analysis',
-    description: 'View detailed AI explanations for your uploaded forms and documents. Get field-by-field guidance and step-by-step instructions.',
-    url: 'https://formbuddyai.com/explanation',
-    images: [
-      {
-        url: '/ico.png',
-        width: 1200,
-        height: 630,
-        alt: 'Form Buddy AI - Form Explanation Results',
-      }
-    ],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Form Explanation Results - AI-Powered Document Analysis',
-    description: 'View detailed AI explanations for your uploaded forms and documents. Get field-by-field guidance.',
-    images: ['/ico.png'],
-  },
-};
-
 "use client";
 
 import React, { useEffect, useState } from "react";
